@@ -9,28 +9,114 @@
   "options": {
     "draftAndPublish": true
   },
-  "pluginOptions": {},
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
   "attributes": {
     "title": {
       "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "required": true
+    },
+    "username": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "required": true
+    },
+    "headline": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "required": true
+    },
+    "content": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "articleStatus": {
+      "type": "enumeration",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "default": "draft",
+      "enum": [
+        "draft",
+        "published",
+        "archived"
+      ]
+    },
+    "whenCreated": {
+      "type": "datetime",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "whenUploaded": {
+      "type": "datetime",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "whenPublished": {
+      "type": "datetime",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "author": {
       "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::author.author"
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "news_articles"
     },
-    "category": {
-      "type": "enumeration",
-      "required": true,
-      "enum": [
-        "announcement",
-        "report"
-      ]
+    "news_category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::news-category.news-category",
+      "inversedBy": "news_articles"
     },
-    "content": {
-      "type": "text",
-      "required": true
+    "news_media": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::news-media.news-media",
+      "mappedBy": "news_article"
+    },
+    "news_translations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::news-translation.news-translation",
+      "mappedBy": "news_article"
+    },
+    "tags": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::news-tag.news-tag",
+      "inversedBy": "newsTag"
     }
   }
 }
