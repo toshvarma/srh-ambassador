@@ -1,0 +1,35 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  background-color: var(--color-white);
+  padding: var(--spacing-2xl) 0;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main {
+    padding: var(--spacing-xl) 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: var(--spacing-lg) 0;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+}
