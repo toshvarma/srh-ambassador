@@ -19,6 +19,12 @@
       "relation": "manyToMany",
       "target": "api::news-article.news-article",
       "mappedBy": "tags"
+    },
+    "news": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::news.news",
+      "inversedBy": "tags"
     }
   }
 }

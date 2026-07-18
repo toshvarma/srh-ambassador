@@ -18,8 +18,10 @@
     "description": { "type": "richtext" },
     "logo": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
     "contact_email": { "type": "email" },
-    "ambassadors": { "type": "relation", "relation": "oneToMany", "target": "api::profile.profile" },
-    "members": { "type": "relation", "relation": "manyToMany", "target": "api::profile.profile" },
+    "submittedBy": { "type": "relation", "relation": "manyToOne", "target": "api::user.user", "inversedBy": "clubSubmissions" },
+    "ambassadors": { "type": "relation", "relation": "oneToMany", "target": "api::user.user", "inversedBy": "ambassadorClubs" },
+    "members": { "type": "relation", "relation": "manyToMany", "target": "api::user.user", "inversedBy": "clubMemberships" },
+    "approvalStatus": { "type": "enumeration", "enum": ["pending", "approved", "rejected"], "default": "pending" },
     "slug": { "type": "uid", "targetField": "title" }
   }
 }

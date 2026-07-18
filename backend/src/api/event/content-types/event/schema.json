@@ -20,7 +20,7 @@
     "end_datetime": { "type": "datetime" },
     "location": { "type": "string" },
     "club": { "type": "relation", "relation": "manyToOne", "target": "api::club.club" },
-    "attendees": { "type": "relation", "relation": "manyToMany", "target": "api::profile.profile" },
+    "attendees": { "type": "relation", "relation": "manyToMany", "target": "api::user.user", "inversedBy": "eventAttendances" },
     "slug": { "type": "uid", "targetField": "title" }
   }
 }
