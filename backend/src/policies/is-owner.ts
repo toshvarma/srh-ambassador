@@ -1,4 +1,4 @@
-export default async (
+﻿export default async (
     policyContext: { state: { user: any }; params: { id: any } },
     _config: any,
     { strapi }: any
@@ -21,3 +21,4 @@ export default async (
 
     return article?.author?.documentId === currentUser.documentId;
 };
+

@@ -1,9 +1,9 @@
 {
-  "collectionName": "news",
+  "collectionName": "announcements",
   "info": {
-    "singularName": "news",
-    "pluralName": "news",
-    "displayName": "News"
+    "singularName": "announcement",
+    "pluralName": "announcements",
+    "displayName": "Announcement"
   },
   "options": {
     "draftAndPublish": true
@@ -24,3 +24,4 @@
     "slug": { "type": "uid", "targetField": "title" }
   }
 }
+

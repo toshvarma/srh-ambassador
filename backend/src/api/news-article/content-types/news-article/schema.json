@@ -1,4 +1,4 @@
-{
+﻿{
   "kind": "collectionType",
   "collectionName": "news_articles",
   "info": {
@@ -120,3 +120,5 @@
     }
   }
 }
+
+

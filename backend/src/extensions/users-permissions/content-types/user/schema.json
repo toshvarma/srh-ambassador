@@ -1,4 +1,4 @@
-{
+﻿{
   "kind": "collectionType",
   "collectionName": "up_users",
   "info": {
@@ -74,3 +74,5 @@
     }
   }
 }
+
+

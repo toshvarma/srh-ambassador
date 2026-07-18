@@ -1,4 +1,4 @@
-{
+﻿{
   "kind": "collectionType",
   "collectionName": "news_translations",
   "info": {
@@ -31,3 +31,5 @@
     }
   }
 }
+
+

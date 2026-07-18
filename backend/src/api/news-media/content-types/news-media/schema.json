@@ -1,4 +1,4 @@
-{
+﻿{
   "kind": "collectionType",
   "collectionName": "news_medias",
   "info": {
@@ -37,3 +37,5 @@
     }
   }
 }
+
+

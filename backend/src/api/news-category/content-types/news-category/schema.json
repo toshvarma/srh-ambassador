@@ -1,4 +1,4 @@
-{
+﻿{
   "kind": "collectionType",
   "collectionName": "news_categories",
   "info": {
@@ -41,3 +41,5 @@
     }
   }
 }
+
+

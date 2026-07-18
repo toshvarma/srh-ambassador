@@ -1,4 +1,4 @@
-{
+﻿{
   "kind": "collectionType",
   "collectionName": "news_tags",
   "info": {
@@ -22,3 +22,5 @@
     }
   }
 }
+
+

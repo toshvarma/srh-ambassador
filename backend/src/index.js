@@ -1,4 +1,4 @@
-module.exports = {
+﻿module.exports = {
   register() {},
   bootstrap: async ({ strapi }) => {
     // Create roles if they don't exist
@@ -39,7 +39,7 @@ module.exports = {
           title_en: 'Tech Club',
           title_de: 'Technik-Club',
           description_en: 'A club for technology enthusiasts.',
-          description_de: 'Ein Club für Technikbegeisterte.'
+          description_de: 'Ein Club fÃ¼r Technikbegeisterte.'
         },
         {
           slug: 'business-club',
@@ -96,24 +96,24 @@ module.exports = {
       // Seed News
       const newsItems = [
         { slug: 'welcome', title_en: 'Welcome to SRH Ambassador', title_de: 'Willkommen beim SRH Ambassador', summary_en: 'Launch of the ambassador network.', summary_de: 'Start des Botschafternetzwerks.' },
-        { slug: 'exchange-program', title_en: 'Exchange Program Open', title_de: 'Austauschprogramm geöffnet', summary_en: 'Applications are open now.', summary_de: 'Bewerbungen sind jetzt offen.' },
-        { slug: 'career-fair', title_en: 'Career Fair Next Week', title_de: 'Karrieremesse nächste Woche', summary_en: 'Meet employers and alumni.', summary_de: 'Treffen Sie Arbeitgeber und Alumni.' },
+        { slug: 'exchange-program', title_en: 'Exchange Program Open', title_de: 'Austauschprogramm geÃ¶ffnet', summary_en: 'Applications are open now.', summary_de: 'Bewerbungen sind jetzt offen.' },
+        { slug: 'career-fair', title_en: 'Career Fair Next Week', title_de: 'Karrieremesse nÃ¤chste Woche', summary_en: 'Meet employers and alumni.', summary_de: 'Treffen Sie Arbeitgeber und Alumni.' },
         { slug: 'hackathon', title_en: 'Student Hackathon', title_de: 'Studenten-Hackathon', summary_en: 'Join the 48-hour challenge.', summary_de: 'Nehmen Sie an der 48-Stunden-Challenge teil.' },
         { slug: 'alumni-meet', title_en: 'Alumni Meetup', title_de: 'Alumni-Treffen', summary_en: 'Reconnect with classmates.', summary_de: 'Treffen Sie ehemalige Kommilitonen.' }
       ];
 
       for (const n of newsItems) {
-        const exists = await strapi.entityService.findMany('api::news.news', { filters: { slug: n.slug, locale: 'en' } });
+        const exists = await strapi.entityService.findMany('api::announcement.news', { filters: { slug: n.slug, locale: 'en' } });
         if (!exists || exists.length === 0) {
-          const created = await strapi.entityService.create('api::news.news', { data: { title: n.title_en, summary: n.summary_en, slug: n.slug, date: new Date().toISOString(), locale: 'en' } });
-          await strapi.entityService.create('api::news.news', { data: { title: n.title_de, summary: n.summary_de, slug: n.slug, date: new Date().toISOString(), locale: 'de' } });
+          const created = await strapi.entityService.create('api::announcement.news', { data: { title: n.title_en, summary: n.summary_en, slug: n.slug, date: new Date().toISOString(), locale: 'en' } });
+          await strapi.entityService.create('api::announcement.news', { data: { title: n.title_de, summary: n.summary_de, slug: n.slug, date: new Date().toISOString(), locale: 'de' } });
         }
       }
 
       // Seed Events
       const events = [
-        { slug: 'orientation', title_en: 'Orientation Day', title_de: 'Orientierungstag', description_en: 'Welcome sessions for new students.', description_de: 'Begrüßungsveranstaltungen für neue Studierende.', start: new Date(Date.now()+7*24*3600*1000).toISOString(), end: new Date(Date.now()+7*24*3600*1000+2*3600*1000).toISOString() },
-        { slug: 'open-lecture', title_en: 'Open Lecture: AI Trends', title_de: 'Vorlesung: KI-Trends', description_en: 'Guest lecture on AI.', description_de: 'Gastvortrag über KI.', start: new Date(Date.now()+14*24*3600*1000).toISOString(), end: new Date(Date.now()+14*24*3600*1000+90*60*1000).toISOString() },
+        { slug: 'orientation', title_en: 'Orientation Day', title_de: 'Orientierungstag', description_en: 'Welcome sessions for new students.', description_de: 'BegrÃ¼ÃŸungsveranstaltungen fÃ¼r neue Studierende.', start: new Date(Date.now()+7*24*3600*1000).toISOString(), end: new Date(Date.now()+7*24*3600*1000+2*3600*1000).toISOString() },
+        { slug: 'open-lecture', title_en: 'Open Lecture: AI Trends', title_de: 'Vorlesung: KI-Trends', description_en: 'Guest lecture on AI.', description_de: 'Gastvortrag Ã¼ber KI.', start: new Date(Date.now()+14*24*3600*1000).toISOString(), end: new Date(Date.now()+14*24*3600*1000+90*60*1000).toISOString() },
         { slug: 'career-workshop', title_en: 'Career Workshop', title_de: 'Karriere-Workshop', description_en: 'CV and interview training.', description_de: 'Lebenslauf- und Interviewtraining.', start: new Date(Date.now()+21*24*3600*1000).toISOString(), end: new Date(Date.now()+21*24*3600*1000+3*3600*1000).toISOString() },
         { slug: 'christmas-party', title_en: 'Christmas Party', title_de: 'Weihnachtsfeier', description_en: 'End of year celebration.', description_de: 'Jahresabschlussfeier.', start: new Date(Date.now()+60*24*3600*1000).toISOString(), end: new Date(Date.now()+60*24*3600*1000+4*3600*1000).toISOString() }
       ];
@@ -132,3 +132,4 @@ module.exports = {
     }
   }
 };
+
