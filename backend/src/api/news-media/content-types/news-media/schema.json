@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "news_medias",
+  "info": {
+    "singularName": "news-media",
+    "pluralName": "news-medias",
+    "displayName": "News Media"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "image",
+        "video",
+        "document"
+      ]
+    },
+    "url": {
+      "type": "string"
+    },
+    "caption": {
+      "type": "string"
+    },
+    "content": {
+      "type": "text"
+    },
+    "news_article": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::news-article.news-article",
+      "inversedBy": "news_media"
+    }
+  }
+}

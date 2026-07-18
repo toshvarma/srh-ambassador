@@ -1,0 +1,26 @@
+{
+  "collectionName": "news",
+  "info": {
+    "singularName": "news",
+    "pluralName": "news",
+    "displayName": "News"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "summary": { "type": "text" },
+    "content": { "type": "richtext" },
+    "date": { "type": "datetime" },
+    "author": { "type": "relation", "relation": "oneToOne", "target": "api::profile.profile" },
+    "related_club": { "type": "relation", "relation": "manyToOne", "target": "api::club.club" },
+    "tags": { "type": "string" },
+    "slug": { "type": "uid", "targetField": "title" }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "collectionName": "clubs",
+  "info": {
+    "singularName": "club",
+    "pluralName": "clubs",
+    "displayName": "Club"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "description": { "type": "richtext" },
+    "logo": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "contact_email": { "type": "email" },
+    "ambassadors": { "type": "relation", "relation": "oneToMany", "target": "api::profile.profile" },
+    "members": { "type": "relation", "relation": "manyToMany", "target": "api::profile.profile" },
+    "slug": { "type": "uid", "targetField": "title" }
+  }
+}

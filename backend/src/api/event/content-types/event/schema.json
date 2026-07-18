@@ -1,0 +1,26 @@
+{
+  "collectionName": "events",
+  "info": {
+    "singularName": "event",
+    "pluralName": "events",
+    "displayName": "Event"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": { "type": "string", "required": true },
+    "description": { "type": "richtext" },
+    "start_datetime": { "type": "datetime" },
+    "end_datetime": { "type": "datetime" },
+    "location": { "type": "string" },
+    "club": { "type": "relation", "relation": "manyToOne", "target": "api::club.club" },
+    "attendees": { "type": "relation", "relation": "manyToMany", "target": "api::profile.profile" },
+    "slug": { "type": "uid", "targetField": "title" }
+  }
+}

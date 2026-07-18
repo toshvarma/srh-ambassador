@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "news_translations",
+  "info": {
+    "singularName": "news-translation",
+    "pluralName": "news-translations",
+    "displayName": "News Translation"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "language_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "richtext"
+    },
+    "summary": {
+      "type": "text"
+    },
+    "news_article": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::news-article.news-article",
+      "inversedBy": "news_translations"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "collectionName": "profiles",
+  "info": {
+    "singularName": "profile",
+    "pluralName": "profiles",
+    "displayName": "Profile"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": false
+    }
+  },
+  "attributes": {
+    "name": { "type": "string", "required": true },
+    "email": { "type": "email", "required": true },
+    "role": { "type": "string" },
+    "avatar": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "bio": { "type": "richtext", "pluginOptions": { "i18n": { "localized": true } } },
+    "memberships": { "type": "relation", "relation": "manyToMany", "target": "api::club.club" },
+    "slug": { "type": "uid", "targetField": "name" }
+  }
+}
