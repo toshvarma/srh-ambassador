@@ -23,8 +23,8 @@
     "news": {
       "type": "relation",
       "relation": "manyToMany",
-      "target": "api::news.news",
-      "inversedBy": "tags"
+      "target": "api::news-item.news-item",
+      "mappedBy": "tags"
     }
   }
 }

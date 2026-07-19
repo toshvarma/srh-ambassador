@@ -1,10 +1,10 @@
 /* SRH University Color Scheme and Design System */
 
 :root {
-  /* Primary Colors - Professional Blue Palette */
-  --srh-primary: #003d8d;        /* SRH Primary Blue - Deep, professional */
-  --srh-primary-light: #0052cc;  /* Lighter blue for hover states */
-  --srh-primary-lighter: #4080ff;/* Even lighter for subtle backgrounds */
+  /* Primary Colors - Black/Orange Palette */
+  --srh-primary: #111111;
+  --srh-primary-light: #2b2b2b;
+  --srh-primary-lighter: #4a4a4a;
   
   /* Accent Colors */
   --srh-accent: #ff6b35;         /* Vibrant orange for CTAs and highlights */
@@ -24,13 +24,14 @@
   --color-gray-300: #cbd5e1;     /* Light gray */
   --color-gray-200: #e2e8f0;     /* Very light gray */
   --color-gray-100: #f1f5f9;     /* Almost white */
+  --color-gray-50: #f8fafc;      /* Lightest gray */
   --color-white: #ffffff;        /* White */
   
   /* Status Colors */
   --color-success: #16a34a;      /* Green - Success */
   --color-warning: #ea580c;      /* Orange - Warning */
   --color-danger: #dc2626;       /* Red - Danger */
-  --color-info: #0284c7;         /* Blue - Info */
+  --color-info: #ea580c;         /* Orange - Info */
   
   /* Spacing */
   --spacing-xs: 0.25rem;         /* 4px */

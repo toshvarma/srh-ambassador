@@ -42,8 +42,8 @@
     "news": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::news.news",
-      "inversedBy": "category"
+      "target": "api::news-item.news-item",
+      "mappedBy": "category"
     }
   }
 }

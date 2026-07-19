@@ -12,7 +12,7 @@ const ROLE_PERMISSIONS = {
     user: ['find', 'findOne'],
     event: ['find', 'findOne'],
     club: ['find', 'findOne'],
-    'news-article': ['find', 'findOne'],
+    'news-item': ['find', 'findOne'],
   },
 
   // Authenticated Base Role - All users have these permissions
@@ -20,7 +20,7 @@ const ROLE_PERMISSIONS = {
     user: ['find', 'findOne'],
     event: ['find', 'findOne'],
     club: ['find', 'findOne'],
-    'news-article': ['find', 'findOne'],
+    'news-item': ['find', 'findOne'],
   },
 
   // Student Role
@@ -32,8 +32,8 @@ const ROLE_PERMISSIONS = {
   student: {
     user: ['find', 'findOne'],
     event: ['find', 'findOne'],
-    club: ['find', 'findOne', 'create'],
-    'news-article': ['find', 'findOne'],
+    club: ['find', 'findOne', 'create', 'update'],
+    'news-item': ['find', 'findOne'],
   },
 
   // Exchange Student Role
@@ -45,8 +45,8 @@ const ROLE_PERMISSIONS = {
   'exchange-student': {
     user: ['find', 'findOne'],
     event: ['find', 'findOne'],
-    club: ['find', 'findOne'],
-    'news-article': ['find', 'findOne'],
+    club: ['find', 'findOne', 'update'],
+    'news-item': ['find', 'findOne'],
   },
 
   // Professor Role
@@ -59,7 +59,7 @@ const ROLE_PERMISSIONS = {
     user: ['find', 'findOne'],
     event: ['find', 'findOne', 'create', 'update'],
     club: ['find', 'findOne'],
-    'news-article': ['find', 'findOne', 'create', 'update', 'delete'],
+    'news-item': ['find', 'findOne', 'create', 'update', 'delete'],
   },
 
   // Teacher Role
@@ -71,7 +71,7 @@ const ROLE_PERMISSIONS = {
     user: ['find', 'findOne'],
     event: ['find', 'findOne', 'create', 'update'],
     club: ['find', 'findOne'],
-    'news-article': ['find', 'findOne', 'create', 'update'],
+    'news-item': ['find', 'findOne', 'create', 'update'],
   },
 
   // Ambassador Role (Special Student Group)
@@ -85,7 +85,7 @@ const ROLE_PERMISSIONS = {
     user: ['find', 'findOne'],
     event: ['find', 'findOne', 'create', 'update'],
     club: ['find', 'findOne', 'create', 'update'],
-    'news-article': ['find', 'findOne', 'create', 'update'],
+    'news-item': ['find', 'findOne', 'create', 'update'],
   },
 
   // Admin Role
@@ -96,7 +96,7 @@ const ROLE_PERMISSIONS = {
     user: ['find', 'findOne', 'create', 'update'],
     event: ['find', 'findOne', 'create', 'update', 'delete'],
     club: ['find', 'findOne', 'create', 'update', 'delete'],
-    'news-article': ['find', 'findOne', 'create', 'update', 'delete'],
+    'news-item': ['find', 'findOne', 'create', 'update', 'delete'],
   },
 
   // Super Admin Role
@@ -108,7 +108,7 @@ const ROLE_PERMISSIONS = {
     user: ['find', 'findOne', 'create', 'update', 'delete'],
     event: ['find', 'findOne', 'create', 'update', 'delete'],
     club: ['find', 'findOne', 'create', 'update', 'delete'],
-    'news-article': ['find', 'findOne', 'create', 'update', 'delete'],
+    'news-item': ['find', 'findOne', 'create', 'update', 'delete'],
   },
 };
 

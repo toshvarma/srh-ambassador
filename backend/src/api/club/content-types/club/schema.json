@@ -1,4 +1,5 @@
 {
+  "kind": "collectionType",
   "collectionName": "clubs",
   "info": {
     "singularName": "club",
@@ -15,11 +16,22 @@
   },
   "attributes": {
     "title": { "type": "string", "required": true },
+    "shortDescription": { "type": "string", "required": true, "maxLength": 180 },
     "description": { "type": "richtext" },
+    "detailedDescription": { "type": "richtext", "required": true },
     "logo": { "type": "media", "multiple": false, "allowedTypes": ["images"] },
+    "gallery": { "type": "media", "multiple": true, "allowedTypes": ["images"] },
+    "coverImageUrl": { "type": "string" },
     "contact_email": { "type": "email" },
+    "minimumMembers": { "type": "integer", "default": 5 },
+    "maximumMembers": { "type": "integer", "default": 30 },
+    "specialEquipmentRequired": { "type": "text" },
+    "meetingFrequency": { "type": "string" },
+    "recommendedFor": { "type": "string" },
+    "signupNotes": { "type": "text" },
+    "ambassadorFeedback": { "type": "text" },
     "submittedBy": { "type": "relation", "relation": "manyToOne", "target": "api::user.user", "inversedBy": "clubSubmissions" },
-    "ambassadors": { "type": "relation", "relation": "oneToMany", "target": "api::user.user", "inversedBy": "ambassadorClubs" },
+    "ambassadors": { "type": "relation", "relation": "manyToMany", "target": "api::user.user", "inversedBy": "ambassadorClubs" },
     "members": { "type": "relation", "relation": "manyToMany", "target": "api::user.user", "inversedBy": "clubMemberships" },
     "approvalStatus": { "type": "enumeration", "enum": ["pending", "approved", "rejected"], "default": "pending" },
     "slug": { "type": "uid", "targetField": "title" }

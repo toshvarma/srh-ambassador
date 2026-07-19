@@ -666,18 +666,38 @@ export interface ApiClubClub extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    ambassadors: Schema.Attribute.Relation<'oneToMany', 'api::profile.profile'>;
+    ambassadorFeedback: Schema.Attribute.Text;
+    ambassadors: Schema.Attribute.Relation<'manyToMany', 'api::user.user'>;
+    approvalStatus: Schema.Attribute.Enumeration<
+      ['pending', 'approved', 'rejected']
+    > &
+      Schema.Attribute.DefaultTo<'pending'>;
     contact_email: Schema.Attribute.Email;
+    coverImageUrl: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.RichText;
+    detailedDescription: Schema.Attribute.RichText & Schema.Attribute.Required;
+    gallery: Schema.Attribute.Media<'images', true>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::club.club'>;
     logo: Schema.Attribute.Media<'images'>;
-    members: Schema.Attribute.Relation<'manyToMany', 'api::profile.profile'>;
+    maximumMembers: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<30>;
+    meetingFrequency: Schema.Attribute.String;
+    members: Schema.Attribute.Relation<'manyToMany', 'api::user.user'>;
+    minimumMembers: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<5>;
     publishedAt: Schema.Attribute.DateTime;
+    recommendedFor: Schema.Attribute.String;
+    shortDescription: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 180;
+      }>;
+    signupNotes: Schema.Attribute.Text;
     slug: Schema.Attribute.UID<'title'>;
+    specialEquipmentRequired: Schema.Attribute.Text;
+    submittedBy: Schema.Attribute.Relation<'manyToOne', 'api::user.user'>;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -701,7 +721,7 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    attendees: Schema.Attribute.Relation<'manyToMany', 'api::profile.profile'>;
+    attendees: Schema.Attribute.Relation<'manyToMany', 'api::user.user'>;
     club: Schema.Attribute.Relation<'manyToOne', 'api::club.club'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -778,10 +798,7 @@ export interface ApiNewsArticleNewsArticle extends Struct.CollectionTypeSchema {
         };
       }> &
       Schema.Attribute.DefaultTo<'draft'>;
-    author: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
+    author: Schema.Attribute.Relation<'manyToOne', 'api::user.user'>;
     content: Schema.Attribute.RichText &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -894,6 +911,7 @@ export interface ApiNewsCategoryNewsCategory
           localized: true;
         };
       }>;
+    news: Schema.Attribute.Relation<'oneToMany', 'api::news-item.news-item'>;
     news_articles: Schema.Attribute.Relation<
       'oneToMany',
       'api::news-article.news-article'
@@ -902,6 +920,74 @@ export interface ApiNewsCategoryNewsCategory
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiNewsItemNewsItem extends Struct.CollectionTypeSchema {
+  collectionName: 'news';
+  info: {
+    displayName: 'News';
+    pluralName: 'news-items';
+    singularName: 'news-item';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    author: Schema.Attribute.Relation<'manyToOne', 'api::user.user'>;
+    category: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::news-category.news-category'
+    >;
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    excerpt: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    featuredImage: Schema.Attribute.Media<'images'>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::news-item.news-item'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    relatedClub: Schema.Attribute.Relation<'manyToOne', 'api::club.club'>;
+    slug: Schema.Attribute.UID<'title'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    status: Schema.Attribute.Enumeration<['draft', 'published', 'archived']> &
+      Schema.Attribute.DefaultTo<'draft'>;
+    tags: Schema.Attribute.Relation<'manyToMany', 'api::news-tag.news-tag'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    visibility: Schema.Attribute.Enumeration<['all', 'student', 'professor']> &
+      Schema.Attribute.DefaultTo<'all'>;
   };
 }
 
@@ -962,6 +1048,7 @@ export interface ApiNewsTagNewsTag extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
+    news: Schema.Attribute.Relation<'manyToMany', 'api::news-item.news-item'>;
     newsTag: Schema.Attribute.Relation<
       'manyToMany',
       'api::news-article.news-article'
@@ -1047,6 +1134,84 @@ export interface ApiProfileProfile extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     role: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'name'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiUserUser extends Struct.CollectionTypeSchema {
+  collectionName: 'users';
+  info: {
+    displayName: 'User';
+    pluralName: 'users';
+    singularName: 'user';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: false;
+    };
+  };
+  attributes: {
+    ambassadorClubs: Schema.Attribute.Relation<'manyToMany', 'api::club.club'>;
+    articlesPublished: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::news-article.news-article'
+    >;
+    avatar: Schema.Attribute.Media<'images'>;
+    bio: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    clubMemberships: Schema.Attribute.Relation<'manyToMany', 'api::club.club'>;
+    clubSubmissions: Schema.Attribute.Relation<'oneToMany', 'api::club.club'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    email: Schema.Attribute.Email &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    enrollmentYear: Schema.Attribute.Integer;
+    eventAttendances: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::event.event'
+    >;
+    firstName: Schema.Attribute.String & Schema.Attribute.Required;
+    lastName: Schema.Attribute.String & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::user.user'> &
+      Schema.Attribute.Private;
+    newsPublished: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::news-item.news-item'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    role: Schema.Attribute.Enumeration<
+      [
+        'Student',
+        'ExchangeStudent',
+        'Professor',
+        'Teacher',
+        'Ambassador',
+        'Admin',
+        'SuperAdmin',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Student'>;
+    status: Schema.Attribute.Enumeration<['active', 'inactive', 'pending']> &
+      Schema.Attribute.DefaultTo<'pending'>;
+    universityAffiliation: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1578,10 +1743,12 @@ declare module '@strapi/strapi' {
       'api::global.global': ApiGlobalGlobal;
       'api::news-article.news-article': ApiNewsArticleNewsArticle;
       'api::news-category.news-category': ApiNewsCategoryNewsCategory;
+      'api::news-item.news-item': ApiNewsItemNewsItem;
       'api::news-media.news-media': ApiNewsMediaNewsMedia;
       'api::news-tag.news-tag': ApiNewsTagNewsTag;
       'api::news-translation.news-translation': ApiNewsTranslationNewsTranslation;
       'api::profile.profile': ApiProfileProfile;
+      'api::user.user': ApiUserUser;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

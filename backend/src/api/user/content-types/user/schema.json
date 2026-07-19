@@ -1,4 +1,5 @@
 {
+  "kind": "collectionType",
   "collectionName": "users",
   "info": {
     "singularName": "user",
@@ -66,37 +67,37 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::club.club",
-      "inversedBy": "submittedBy"
+      "mappedBy": "submittedBy"
     },
     "eventAttendances": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::event.event",
-      "inversedBy": "attendees"
+      "mappedBy": "attendees"
     },
     "clubMemberships": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::club.club",
-      "inversedBy": "members"
+      "mappedBy": "members"
     },
     "ambassadorClubs": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::club.club",
-      "inversedBy": "ambassadors"
+      "mappedBy": "ambassadors"
     },
     "articlesPublished": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::news-article.news-article",
-      "inversedBy": "author"
+      "mappedBy": "author"
     },
     "newsPublished": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::news.news",
-      "inversedBy": "author"
+      "target": "api::news-item.news-item",
+      "mappedBy": "author"
     }
   }
 }

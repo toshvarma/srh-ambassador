@@ -3,16 +3,23 @@
 }
 
 .header {
-  margin-bottom: var(--spacing-2xl);
+  margin-bottom: var(--spacing-xl);
 }
 
 .header h1 {
   font-size: var(--font-size-4xl);
   color: var(--color-gray-900);
-  margin: 0;
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 3px solid var(--srh-primary);
+  margin: 0 0 var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 3px solid var(--srh-accent);
   display: inline-block;
+}
+
+.description {
+  color: var(--color-gray-600);
+  font-size: var(--font-size-base);
+  margin: var(--spacing-sm) 0 0;
+  max-width: 680px;
 }
 
 .filterSection {

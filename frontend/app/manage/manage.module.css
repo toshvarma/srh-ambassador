@@ -1,0 +1,75 @@
+.container {
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.notice {
+  border-left: 3px solid var(--srh-primary);
+  background: var(--color-gray-100);
+  padding: var(--spacing-md);
+}
+
+.grid {
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.section {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.form {
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.form input,
+.form textarea,
+.form select {
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  width: 100%;
+}
+
+.form button,
+.item button {
+  background: var(--srh-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.9rem;
+}
+
+.item {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: grid;
+  gap: var(--spacing-sm);
+}
+
+.itemActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.danger {
+  background: var(--color-danger) !important;
+}
+
+.success {
+  background: var(--color-success) !important;
+}
+
+.warning {
+  background: var(--color-warning) !important;
+}
+
+.error {
+  color: var(--color-danger);
+}
