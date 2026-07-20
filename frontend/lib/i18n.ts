@@ -3,7 +3,7 @@ export type Locale = "en" | "de";
 type Dictionary = Record<string, string>;
 
 const en: Dictionary = {
-  appTitle: "SRH Ambassador",
+  appTitle: "SRH Community Hub",
   appTagline: "Connect, share, and grow across campus life",
   navHome: "Home",
   navNews: "News",
@@ -17,7 +17,7 @@ const en: Dictionary = {
   profile: "Profile",
   loading: "Loading...",
   unknownError: "Something went wrong.",
-  welcomeTitle: "Welcome to SRH Ambassador",
+  welcomeTitle: "Welcome to SRH Community Hub",
   welcomeBody:
     "Explore clubs, follow events, read multilingual news, and manage student initiatives with role-based access.",
   quickActions: "Quick Actions",
@@ -66,7 +66,7 @@ const en: Dictionary = {
 };
 
 const de: Dictionary = {
-  appTitle: "SRH Ambassador",
+  appTitle: "SRH Community Hub",
   appTagline: "Vernetzen, teilen und gemeinsam auf dem Campus wachsen",
   navHome: "Start",
   navNews: "Nachrichten",
@@ -80,7 +80,7 @@ const de: Dictionary = {
   profile: "Profil",
   loading: "Wird geladen...",
   unknownError: "Etwas ist schiefgelaufen.",
-  welcomeTitle: "Willkommen bei SRH Ambassador",
+  welcomeTitle: "Willkommen beim SRH Community Hub",
   welcomeBody:
     "Entdecken Sie Clubs, verfolgen Sie Veranstaltungen, lesen Sie mehrsprachige Nachrichten und verwalten Sie studentische Initiativen mit rollenbasiertem Zugriff.",
   quickActions: "Schnellzugriff",

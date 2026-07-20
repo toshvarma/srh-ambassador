@@ -1,71 +1,104 @@
 .clubsPage {
   display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
   gap: var(--spacing-xl);
-  padding: var(--spacing-lg) 0;
+  align-items: start;
 }
 
-.header {
+.sidebar {
+  position: sticky;
+  top: 110px;
   display: grid;
   gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--color-gray-200);
+  background: var(--srh-surface);
+  box-shadow: var(--shadow-sm);
 }
 
-.headerRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--spacing-md);
-}
-
-.headerRow h1 {
-  margin: 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 3px solid var(--srh-accent);
-  display: inline-block;
-}
-
-.headerActions {
-  display: flex;
+.sidebarActions {
+  display: grid;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-gray-200);
+  background: var(--color-gray-50);
+}
+
+.sidebar h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+}
+
+.sideSection {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+
+.sideSection h2 {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-gray-600);
+}
+
+.sideHint {
+  margin: 0;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-sm);
+}
+
+.actionButton,
+.reviewButton,
+.submitButton,
+.readMoreButton {
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-semibold);
 }
 
 .actionButton {
   background: var(--srh-accent);
   color: var(--color-white);
-  border-radius: var(--radius-full);
-  padding: 0.6rem 1.2rem;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
+  padding: 0.6rem 1rem;
+  text-align: center;
 }
 
 .reviewButton {
-  background: #111111;
+  background: var(--srh-primary);
   color: var(--color-white);
-  border-radius: var(--radius-full);
-  padding: 0.6rem 1.2rem;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
+  padding: 0.6rem 1rem;
+  text-align: center;
 }
 
-/* Submission form */
-.form {
+.content {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.form,
+.reviewPanel {
   border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   padding: var(--spacing-lg);
+  background: var(--srh-surface);
+  box-shadow: var(--shadow-sm);
   display: grid;
   gap: var(--spacing-sm);
-  background: var(--color-white);
 }
 
-.form h2 {
-  margin: 0 0 var(--spacing-sm);
+.form h2,
+.reviewPanel h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
 }
 
 .form input,
-.form textarea {
+.form textarea,
+.reviewCard textarea {
   border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: 0.75rem;
   width: 100%;
 }
@@ -73,35 +106,14 @@
 .formGrid {
   display: grid;
   gap: var(--spacing-sm);
-  grid-template-columns: 1fr 1fr;
-}
-
-.autofillInfo {
-  color: var(--color-gray-600);
-  font-size: var(--font-size-sm);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .submitButton {
+  justify-self: start;
   background: var(--srh-accent);
   color: var(--color-white);
-  border-radius: var(--radius-md);
-  padding: 0.75rem 1.2rem;
-  font-weight: var(--font-weight-semibold);
-  align-self: start;
-}
-
-/* Review panel */
-.reviewPanel {
-  border: 2px solid #111111;
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-lg);
-  display: grid;
-  gap: var(--spacing-md);
-  background: var(--color-white);
-}
-
-.reviewPanel h2 {
-  margin: 0;
+  padding: 0.7rem 1rem;
 }
 
 .reviewCard {
@@ -112,24 +124,8 @@
   gap: var(--spacing-sm);
 }
 
-.reviewImage {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-}
-
-.reviewMeta {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-500);
+.reviewCard p {
   margin: 0;
-}
-
-.reviewCard textarea {
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-  width: 100%;
 }
 
 .reviewActions {
@@ -140,285 +136,122 @@
 
 .reviewActions button {
   border-radius: var(--radius-md);
-  padding: 0.5rem 0.9rem;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
+  padding: 0.45rem 0.85rem;
   color: var(--color-white);
+  font-weight: var(--font-weight-semibold);
 }
 
 .approveButton { background: #16a34a; }
 .rejectButton { background: #dc2626; }
 .suggestButton { background: #111111; }
 
-/* Your Clubs section */
-.yourClubsSection {
-  display: grid;
-  gap: var(--spacing-md);
-}
-
-.yourClubsSection h2 {
-  margin: 0;
-}
-
-.emptyState {
-  color: var(--color-gray-600);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-.yourClubsGrid {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.yourClubChip {
-  background: var(--srh-accent);
-  color: var(--color-white);
-  border-radius: var(--radius-full);
-  padding: 0.4rem 1rem;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-/* Club cards */
 .cards {
   display: grid;
   gap: var(--spacing-lg);
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .clubCard {
   border: 1px solid var(--color-gray-200);
   border-radius: var(--radius-2xl);
   overflow: hidden;
-  background: var(--color-white);
-  display: flex;
-  flex-direction: column;
+  background: var(--srh-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.clubImage,
+.clubImagePlaceholder {
+  width: 100%;
+  height: 170px;
 }
 
 .clubImage {
-  width: 100%;
-  height: 180px;
   object-fit: cover;
 }
 
 .clubImagePlaceholder {
-  width: 100%;
-  height: 180px;
   background: var(--color-gray-100);
 }
 
 .clubCardBody {
-  padding: var(--spacing-md);
   display: grid;
-  gap: var(--spacing-sm);
-  flex: 1;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
 }
 
 .clubCardBody h3 {
   margin: 0;
 }
 
+.clubShortDesc,
+.clubMeta,
+.feedback {
+  margin: 0;
+}
+
 .clubShortDesc {
   color: var(--color-gray-700);
   font-size: var(--font-size-sm);
-  margin: 0;
 }
 
-.clubDetails summary {
-  cursor: pointer;
-  color: var(--srh-accent);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
+.clubMeta {
+  color: var(--color-gray-600);
+  font-size: var(--font-size-xs);
 }
 
-.clubDetailsContent {
-  padding-top: var(--spacing-sm);
-}
-
-.clubDetailsContent p {
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-700);
-  margin: 0 0 var(--spacing-sm);
-}
-
-.clubDetailsContent ul {
-  font-size: var(--font-size-sm);
-  padding-left: var(--spacing-lg);
-  margin: 0;
-}
-
-.joinButton {
-  background: var(--srh-accent);
+.readMoreButton {
+  width: fit-content;
+  text-decoration: none;
+  background: var(--srh-primary);
   color: var(--color-white);
-  border-radius: var(--radius-md);
-  padding: 0.65rem 1rem;
-  font-weight: var(--font-weight-semibold);
+  padding: 0.45rem 0.95rem;
   font-size: var(--font-size-sm);
-  align-self: start;
-}
-
-.joinedButton {
-  background: var(--color-gray-400);
 }
 
 .feedback {
   color: var(--color-gray-600);
   font-size: var(--font-size-xs);
-  margin: 0;
   border-left: 3px solid var(--color-warning);
   padding-left: var(--spacing-sm);
-}
-
-.noClubs,
-.loading,
-.error {
-  text-align: center;
-  padding: var(--spacing-xl);
-}
-
-.error {
-  color: var(--color-danger);
-  background: var(--color-gray-100);
-  border-radius: var(--radius-md);
-}
-
-@media (max-width: 768px) {
-  .formGrid { grid-template-columns: 1fr; }
-  .headerRow { flex-direction: column; align-items: flex-start; }
-  .cards { grid-template-columns: 1fr; }
-}
-
-
-.header h1 {
-  margin: 0;
-  padding-bottom: var(--spacing-md);
-  border-bottom: 3px solid var(--srh-accent);
-}
-
-.form,
-.reviewPanel {
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-xl);
-  padding: var(--spacing-lg);
-  display: grid;
-  gap: var(--spacing-sm);
-  background: var(--color-white);
-}
-
-.formGrid {
-  display: grid;
-  gap: var(--spacing-sm);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.form input,
-.form textarea,
-.reviewPanel textarea {
-  border: 1px solid var(--color-gray-300);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-}
-
-.form button,
-.reviewActions button,
-.joinButton {
-  background: var(--srh-accent);
-  color: var(--color-white);
-  border-radius: var(--radius-md);
-  padding: 0.7rem 1rem;
-  font-weight: var(--font-weight-semibold);
-}
-
-.autofillInfo {
-  color: var(--color-gray-600);
-  font-size: var(--font-size-sm);
-}
-
-.reviewCard {
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
-  display: grid;
-  gap: var(--spacing-sm);
-}
-
-.reviewActions {
-  display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
-}
-
-.approveButton {
-  background: #16a34a !important;
-}
-
-.rejectButton {
-  background: #dc2626 !important;
-}
-
-.suggestButton {
-  background: #111111 !important;
-}
-
-.cards {
-  display: grid;
-  gap: var(--spacing-lg);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.clubCard {
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-2xl);
-  padding: var(--spacing-md);
-  display: grid;
-  gap: var(--spacing-sm);
-  background: var(--color-white);
-}
-
-.clubImage {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  border-radius: var(--radius-lg);
-}
-
-.clubCard details summary {
-  cursor: pointer;
-  color: var(--srh-accent);
-  font-weight: var(--font-weight-semibold);
-}
-
-.clubCard ul {
-  margin: var(--spacing-sm) 0 0;
-  padding-left: var(--spacing-lg);
-}
-
-.joinButton:disabled {
-  background: var(--color-gray-500);
-}
-
-.feedback {
-  color: var(--color-gray-600);
-  font-size: var(--font-size-sm);
 }
 
 .loading,
 .error,
 .noClubs {
   text-align: center;
-  padding: var(--spacing-xl);
+  padding: var(--spacing-2xl);
+  border-radius: var(--radius-xl);
 }
 
 .error {
+  background: #fff2f2;
   color: var(--color-danger);
-  background: var(--color-gray-100);
-  border-radius: var(--radius-md);
+  border: 1px solid #fecaca;
+}
+
+.noClubs {
+  background: var(--color-gray-50);
+  color: var(--color-gray-600);
+}
+
+@media (max-width: 1024px) {
+  .clubsPage {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    align-items: start;
+  }
 }
 
 @media (max-width: 768px) {
   .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cards {
     grid-template-columns: 1fr;
   }
 }

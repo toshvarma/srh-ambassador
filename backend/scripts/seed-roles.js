@@ -15,6 +15,8 @@ const rolePermissionConfig = {
       'api::event.event': ['find', 'findOne'],
       'api::club.club': ['find', 'findOne', 'create', 'update'],
       'api::news-item.news-item': ['find', 'findOne'],
+      'api::news-category.news-category': ['find', 'findOne'],
+      'api::news-tag.news-tag': ['find', 'findOne'],
     },
   },
   'Exchange Student': {
@@ -24,6 +26,8 @@ const rolePermissionConfig = {
       'api::event.event': ['find', 'findOne'],
       'api::club.club': ['find', 'findOne', 'update'],
       'api::news-item.news-item': ['find', 'findOne'],
+      'api::news-category.news-category': ['find', 'findOne'],
+      'api::news-tag.news-tag': ['find', 'findOne'],
     },
   },
   Professor: {
@@ -33,6 +37,8 @@ const rolePermissionConfig = {
       'api::event.event': ['find', 'findOne', 'create', 'update', 'delete'],
       'api::club.club': ['find', 'findOne'],
       'api::news-item.news-item': ['find', 'findOne', 'create', 'update', 'delete'],
+      'api::news-category.news-category': ['find', 'findOne'],
+      'api::news-tag.news-tag': ['find', 'findOne'],
     },
   },
   Teacher: {
@@ -42,6 +48,8 @@ const rolePermissionConfig = {
       'api::event.event': ['find', 'findOne', 'create', 'update'],
       'api::club.club': ['find', 'findOne'],
       'api::news-item.news-item': ['find', 'findOne', 'create', 'update'],
+      'api::news-category.news-category': ['find', 'findOne'],
+      'api::news-tag.news-tag': ['find', 'findOne'],
     },
   },
   Ambassador: {
@@ -51,6 +59,8 @@ const rolePermissionConfig = {
       'api::event.event': ['find', 'findOne', 'create', 'update'],
       'api::club.club': ['find', 'findOne', 'create', 'update', 'delete'],
       'api::news-item.news-item': ['find', 'findOne', 'create', 'update', 'delete'],
+      'api::news-category.news-category': ['find', 'findOne', 'create', 'update', 'delete'],
+      'api::news-tag.news-tag': ['find', 'findOne', 'create', 'update', 'delete'],
     },
   },
   Admin: {
@@ -60,6 +70,8 @@ const rolePermissionConfig = {
       'api::event.event': ['find', 'findOne', 'create', 'update', 'delete'],
       'api::club.club': ['find', 'findOne', 'create', 'update', 'delete'],
       'api::news-item.news-item': ['find', 'findOne', 'create', 'update', 'delete'],
+      'api::news-category.news-category': ['find', 'findOne', 'create', 'update', 'delete'],
+      'api::news-tag.news-tag': ['find', 'findOne', 'create', 'update', 'delete'],
     },
   },
   'Super Admin': {
@@ -69,6 +81,8 @@ const rolePermissionConfig = {
       'api::event.event': ['find', 'findOne', 'create', 'update', 'delete'],
       'api::club.club': ['find', 'findOne', 'create', 'update', 'delete'],
       'api::news-item.news-item': ['find', 'findOne', 'create', 'update', 'delete'],
+      'api::news-category.news-category': ['find', 'findOne', 'create', 'update', 'delete'],
+      'api::news-tag.news-tag': ['find', 'findOne', 'create', 'update', 'delete'],
     },
   },
 };
@@ -83,7 +97,7 @@ const sampleUsers = [
     role: 'Student',
     roleName: 'Student',
     status: 'active',
-    universityAffiliation: 'Computer Science',
+    universityAffiliation: 'B.Sc. Web Development',
     enrollmentYear: 2023,
   },
   {
@@ -245,9 +259,28 @@ const sampleClubs = [
     meetingFrequency: 'Bi-weekly (Wednesday 18:00)',
     recommendedFor: 'Students interested in sustainability and social impact',
     signupNotes: 'Members can join planning or operations teams.',
-    approvalStatus: 'pending',
-    ambassadorFeedback: 'Please include a month-by-month plan before final approval.',
+    approvalStatus: 'rejected',
+    rejectionReason:
+      'Budget constraints and significant overlap with the existing Green Campus program. Please coordinate with the sustainability office and resubmit with a differentiated scope.',
+    ambassadorFeedback:
+      'Happy to discuss further — reach out before resubmitting so we can align with current initiatives.',
     coverImageUrl: 'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    title: 'SRH Photography & Visual Arts Club',
+    shortDescription: 'Weekly shoots, editing workshops, and campus exhibitions.',
+    description: 'Creative photography and digital art for all skill levels.',
+    detailedDescription:
+      'Members learn DSLR and smartphone photography, post-processing, and visual storytelling. The club runs themed shoots every month and holds a semester-end exhibition.',
+    contact_email: 'photography.club@srh.de',
+    minimumMembers: 5,
+    maximumMembers: 25,
+    specialEquipmentRequired: 'Any camera or smartphone. Editing software optional.',
+    meetingFrequency: 'Weekly (Friday 17:00)',
+    recommendedFor: 'All students with an interest in visual arts',
+    signupNotes: 'No experience necessary — beginners encouraged.',
+    approvalStatus: 'pending',
+    coverImageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80',
   },
 ];
 
@@ -388,14 +421,17 @@ async function cleanupAndSeedContent(cmsUserByRole) {
   // Create clubs first so we can reference their documentIds in news
   const createdClubs = {};
   for (const club of sampleClubs) {
+    // Approved and rejected clubs were reviewed by the ambassador; pending clubs have no reviewer yet
+    const needsReviewer = club.approvalStatus === 'approved' || club.approvalStatus === 'rejected';
     const created = await strapi.documents('api::club.club').create({
       status: 'published',
       locale: 'en',
       data: {
         ...club,
         submittedBy: studentUser.documentId,
-        ambassadors: [ambassadorUser.documentId],
-        members: [studentUser.documentId],
+        reviewedBy: needsReviewer ? ambassadorUser.documentId : undefined,
+        ambassadors: needsReviewer ? [ambassadorUser.documentId] : [],
+        members: club.approvalStatus === 'approved' ? [studentUser.documentId] : [],
       },
     });
     createdClubs[club.title] = created;
@@ -459,6 +495,7 @@ async function cleanupAndSeedContent(cmsUserByRole) {
     {
       title: 'Campus Orientation Day',
       description: 'Welcome session for all new and exchange students. Campus tour, registration help, and social activities.',
+      authorName: 'Anna Schneider',
       start_datetime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
       end_datetime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000).toISOString(),
       location: 'SRH Main Hall',
@@ -466,6 +503,7 @@ async function cleanupAndSeedContent(cmsUserByRole) {
     {
       title: 'Robotics Club Kickoff Evening',
       description: 'Welcome session for new robotics club members. Introductions, project overview, and first prototyping task.',
+      authorName: 'Lars Weber',
       start_datetime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
       end_datetime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       location: 'SRH Lab Building B',
@@ -474,6 +512,7 @@ async function cleanupAndSeedContent(cmsUserByRole) {
     {
       title: 'Student Club Fair',
       description: 'Meet all active SRH clubs, talk to current members, and sign up for the semester.',
+      authorName: 'Lars Weber',
       start_datetime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       end_datetime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(),
       location: 'SRH Atrium',
@@ -481,6 +520,7 @@ async function cleanupAndSeedContent(cmsUserByRole) {
     {
       title: 'Guest Lecture: AI in Healthcare',
       description: 'Professor Dr. Müller presents cutting-edge research on AI applications in diagnostic medicine.',
+      authorName: 'Prof. Thomas Müller',
       start_datetime: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
       end_datetime: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000).toISOString(),
       location: 'Lecture Hall C2',

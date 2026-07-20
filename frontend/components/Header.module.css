@@ -1,5 +1,5 @@
 .header {
-  background-color: var(--srh-primary);
+  background: linear-gradient(90deg, #111111 0%, #232323 65%, #111111 100%);
   color: white;
   padding: var(--spacing-md) 0;
   box-shadow: var(--shadow-md);
@@ -38,9 +38,10 @@
 
 .nav {
   display: flex;
-  gap: var(--spacing-xl);
+  gap: var(--spacing-lg);
   flex: 1;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .navLink {
@@ -48,14 +49,15 @@
   text-decoration: none;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  transition: opacity var(--transition-fast);
+  transition: opacity var(--transition-fast), color var(--transition-fast);
   position: relative;
+  opacity: 0.9;
 }
 
 .navLink::after {
   content: '';
   position: absolute;
-  bottom: -8px;
+  bottom: -6px;
   left: 0;
   width: 0;
   height: 2px;
@@ -67,6 +69,11 @@
   width: 100%;
 }
 
+.navLink:hover {
+  color: #ffe8d1;
+  opacity: 1;
+}
+
 .actions {
   display: flex;
   gap: var(--spacing-md);
@@ -76,9 +83,9 @@
 .languageToggle {
   background-color: transparent;
   color: white;
-  border: 2px solid white;
+  border: 1px solid rgb(255 255 255 / 0.45);
   padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
   cursor: pointer;
@@ -96,7 +103,7 @@
   background-color: var(--srh-accent);
   color: white;
   padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-base);
   cursor: pointer;
@@ -107,7 +114,7 @@
 }
 
 .loginButton:hover {
-  background-color: var(--srh-accent-light);
+  background-color: #ff9347;
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }

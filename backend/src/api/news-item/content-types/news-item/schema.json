@@ -54,6 +54,9 @@
       "multiple": false,
       "allowedTypes": ["images"]
     },
+    "featuredImageUrl": {
+      "type": "string"
+    },
     "category": {
       "type": "relation",
       "relation": "manyToOne",
@@ -86,6 +89,9 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::club.club"
+    },
+    "courseLabel": {
+      "type": "string"
     },
     "publishedAt": {
       "type": "datetime"

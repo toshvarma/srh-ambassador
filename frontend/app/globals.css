@@ -2,25 +2,25 @@
   --srh-primary: #111111;
   --srh-primary-light: #2b2b2b;
   --srh-primary-lighter: #4a4a4a;
-  --srh-accent: #ff6b35;
-  --srh-accent-light: #ffb347;
-  --srh-teal: #00a896;
-  --srh-purple: #7b2cbf;
-  --color-gray-900: #0f172a;
-  --color-gray-800: #1e293b;
-  --color-gray-700: #334155;
-  --color-gray-600: #475569;
-  --color-gray-500: #64748b;
-  --color-gray-400: #94a3b8;
-  --color-gray-300: #cbd5e1;
-  --color-gray-200: #e2e8f0;
-  --color-gray-100: #f1f5f9;
+  --srh-accent: #f27a1a;
+  --srh-accent-light: #ffd9b8;
+  --srh-surface: #ffffff;
+  --srh-page: #f7f7f3;
+  --color-gray-900: #1f2937;
+  --color-gray-800: #243041;
+  --color-gray-700: #415266;
+  --color-gray-600: #5b6b7d;
+  --color-gray-500: #7a8796;
+  --color-gray-400: #9ca6b3;
+  --color-gray-300: #d5dce5;
+  --color-gray-200: #e8edf3;
+  --color-gray-100: #f3f6f9;
   --color-gray-50: #f8fafc;
   --color-white: #ffffff;
   --color-success: #16a34a;
   --color-warning: #ea580c;
   --color-danger: #dc2626;
-  --color-info: #ea580c;
+  --color-info: #2563eb;
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -28,6 +28,9 @@
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
   --spacing-3xl: 4rem;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
@@ -45,13 +48,15 @@
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.625;
   --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
   --radius-full: 9999px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 2px 8px rgb(15 23 42 / 0.05);
+  --shadow-md: 0 8px 18px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 14px 24px rgb(15 23 42 / 0.1);
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --z-sticky: 1020;
@@ -72,10 +77,11 @@ html {
 
 body {
   min-height: 100%;
+  font-family: var(--font-geist-sans), var(--font-sans);
   font-size: var(--font-size-base);
   line-height: var(--line-height-normal);
   color: var(--color-gray-900);
-  background-color: var(--color-white);
+  background: radial-gradient(circle at top left, #fff7ef 0%, #f7f7f3 35%, #f3f6f9 100%);
 }
 
 h1,

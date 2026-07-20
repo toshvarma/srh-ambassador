@@ -12,13 +12,13 @@
   justify-content: center;
   gap: var(--spacing-lg);
   padding: var(--spacing-xl);
-  background: var(--color-white);
+  background: transparent;
 }
 
 .guestDescription {
-  max-width: 680px;
+  max-width: 720px;
   text-align: center;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-base);
   color: var(--color-gray-800);
 }
 
@@ -31,9 +31,91 @@
   text-decoration: none;
 }
 
+.guestHeroCard {
+  max-width: 980px;
+  width: 100%;
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(17 17 17 / 0.62);
+  backdrop-filter: blur(6px);
+  padding: clamp(1.2rem, 2.5vw, 2rem);
+  display: grid;
+  gap: var(--spacing-md);
+  color: var(--color-white);
+}
+
+.guestHeroCard h1 {
+  margin: 0;
+  text-align: center;
+}
+
+.guestActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.guestAccessGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.guestAccessCard {
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-md);
+  background: rgb(255 255 255 / 0.06);
+}
+
+.guestAccessCard h2 {
+  margin: 0;
+  font-size: var(--font-size-base);
+}
+
+.guestAccessCard ul {
+  margin: 0.55rem 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.guestSecondaryButton {
+  border-radius: var(--radius-full);
+  padding: 0.75rem 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  color: var(--color-white);
+  border: 1px solid rgb(255 255 255 / 0.35);
+}
+
+.guestEventPreview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.previewCard {
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-md);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.previewCard h2,
+.previewCard p {
+  margin: 0;
+}
+
+.previewCard p {
+  margin-top: 0.35rem;
+  color: rgb(255 255 255 / 0.9);
+}
+
 .main {
   flex: 1;
-  background-color: var(--color-white);
+  background-color: transparent;
   padding: var(--spacing-2xl) 0;
 }
 
@@ -42,12 +124,22 @@
   margin: 0 auto;
   padding: 0 var(--spacing-md);
   width: 100%;
+  display: grid;
+  gap: var(--spacing-lg);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .main {
     padding: var(--spacing-xl) 0;
+  }
+
+  .guestEventPreview {
+    grid-template-columns: 1fr;
+  }
+
+  .guestAccessGrid {
+    grid-template-columns: 1fr;
   }
 }
 

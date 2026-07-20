@@ -1,0 +1,242 @@
+/* ── Confirmation overlay / dialog ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: var(--spacing-md);
+}
+
+.dialog {
+  background: var(--color-white);
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-xl);
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--srh-primary);
+}
+
+.dialogBody {
+  margin: 0;
+  color: var(--color-gray-600);
+  font-size: var(--font-size-base);
+  line-height: 1.55;
+}
+
+.dialogActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.dialogCancel {
+  border-radius: var(--radius-full);
+  padding: 0.55rem 1.1rem;
+  border: 1.5px solid var(--color-gray-300);
+  background: transparent;
+  color: var(--srh-primary);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+.dialogCancel:hover { border-color: var(--srh-accent); }
+
+/* ── Decision locked card ── */
+.decisionLockedCard {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-xl);
+  background: var(--color-gray-50);
+  padding: var(--spacing-lg);
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+  box-shadow: var(--shadow-sm);
+}
+
+.decisionLockedIcon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--color-gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  color: var(--color-gray-600);
+}
+
+.decisionLockedCard strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--srh-primary);
+}
+
+.decisionLockedCard p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+}
+
+.page {
+  display: grid;
+  gap: var(--spacing-md);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.backLink {
+  color: var(--color-gray-500);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.backLink:hover { color: var(--srh-accent); }
+
+.clubHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+.clubHeader h1 { margin: 0; font-size: var(--font-size-3xl); }
+
+.statusBadge {
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.85rem;
+  color: var(--color-white);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.cover {
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--radius-2xl);
+}
+
+.card {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-xl);
+  background: var(--srh-surface);
+  padding: var(--spacing-lg);
+  display: grid;
+  gap: var(--spacing-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.card h2 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+}
+
+.card p {
+  margin: 0;
+  color: var(--color-gray-700);
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.3rem 1rem;
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+.meta dt { font-weight: var(--font-weight-semibold); color: var(--color-gray-500); }
+.meta dd { margin: 0; }
+.meta a { color: var(--srh-accent); }
+
+.decisionBlock {
+  background: var(--color-gray-50);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+.decisionBlock p { margin: 0.3rem 0 0; }
+
+.helpText {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: 0;
+}
+
+.fieldLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--srh-primary);
+}
+.required { color: #dc2626; font-weight: normal; }
+.optional { color: var(--color-gray-500); font-weight: normal; }
+
+.textarea {
+  border: 1.5px solid var(--color-gray-300);
+  border-radius: var(--radius-lg);
+  padding: 0.7rem 0.9rem;
+  font-family: inherit;
+  font-size: var(--font-size-base);
+  width: 100%;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--srh-accent);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.secondaryAction,
+.successAction,
+.rejectAction {
+  border-radius: var(--radius-full);
+  padding: 0.55rem 1.1rem;
+  color: var(--color-white);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.secondaryAction:disabled,
+.successAction:disabled,
+.rejectAction:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.secondaryAction { background: var(--srh-primary); }
+.successAction   { background: #16a34a; }
+.rejectAction    { background: #dc2626; }
+
+.notice,
+.loading,
+.success,
+.error {
+  margin: 0;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.notice  { border: 1px solid #fde68a; background: #fffbeb; color: #92400e; }
+.loading { background: var(--color-gray-100); }
+.success { border: 1px solid #bbf7d0; background: #f0fdf4; color: #166534; }
+.error   { border: 1px solid #fecaca; background: #fff2f2; color: var(--color-danger); }

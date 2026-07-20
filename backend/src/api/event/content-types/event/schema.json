@@ -16,10 +16,16 @@
   },
   "attributes": {
     "title": { "type": "string", "required": true },
+    "shortDescription": { "type": "string", "maxLength": 220 },
     "description": { "type": "richtext" },
     "start_datetime": { "type": "datetime" },
     "end_datetime": { "type": "datetime" },
     "location": { "type": "string" },
+    "authorName": { "type": "string" },
+    "author": { "type": "relation", "relation": "manyToOne", "target": "api::user.user" },
+    "thumbnailUrl": { "type": "string" },
+    "category": { "type": "relation", "relation": "manyToOne", "target": "api::news-category.news-category" },
+    "tags": { "type": "relation", "relation": "manyToMany", "target": "api::news-tag.news-tag" },
     "club": { "type": "relation", "relation": "manyToOne", "target": "api::club.club" },
     "attendees": { "type": "relation", "relation": "manyToMany", "target": "api::user.user", "inversedBy": "eventAttendances" },
     "slug": { "type": "uid", "targetField": "title" }

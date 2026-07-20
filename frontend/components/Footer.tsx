@@ -13,11 +13,11 @@ export default function Footer() {
       <div className={styles.container}>
         <div className={styles.content}>
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>{isEn ? "About Us" : "Über uns"}</h3>
+            <h3 className={styles.sectionTitle}>{isEn ? "SRH Community Hub" : "SRH Community Hub"}</h3>
             <p className={styles.sectionText}>
               {isEn
-                ? "SRH Ambassador is a platform for students to connect, share ideas, and build community."
-                : "SRH Ambassador ist eine Plattform, auf der Studierende sich vernetzen, Ideen teilen und Gemeinschaft aufbauen."}
+                ? "Campus updates, events, and clubs in one place."
+                : "Campus-Updates, Veranstaltungen und Clubs an einem Ort."}
             </p>
           </div>
 
@@ -50,7 +50,7 @@ export default function Footer() {
             </Link>
           </div>
           <p className={styles.copyright}>
-            {isEn ? "© 2026 SRH Ambassador. All rights reserved." : "© 2026 SRH Ambassador. Alle Rechte vorbehalten."}
+            {isEn ? "© 2026 SRH Community Hub." : "© 2026 SRH Community Hub."}
           </p>
         </div>
       </div>

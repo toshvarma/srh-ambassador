@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, useCapabilities } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { t } from "@/lib/i18n";
 import styles from "./Header.module.css";
@@ -11,15 +11,22 @@ export default function Header() {
   const pathname = usePathname();
   const { locale, toggleLocale } = useLocale();
   const { auth, logout } = useAuth();
+  const capabilities = useCapabilities();
 
-  const links = [
+  const authLinks = [
     { href: "/", label: t(locale, "navHome") },
     { href: "/news", label: t(locale, "navNews") },
     { href: "/events", label: t(locale, "navEvents") },
     { href: "/clubs", label: t(locale, "navClubs") },
-    { href: "/users", label: t(locale, "navUsers") },
-    { href: "/manage", label: t(locale, "navManage") },
+    { href: "/profile", label: t(locale, "profile") },
   ];
+  const guestLinks = [
+    { href: "/", label: t(locale, "navHome") },
+    { href: "/events", label: t(locale, "navEvents") },
+  ];
+  const navLinks = auth ? authLinks : guestLinks;
+  const canAccessManage =
+    capabilities.canManageNews || capabilities.canManageEvents || capabilities.canApproveClubIdea;
 
   return (
     <header className={styles.header}>
@@ -29,11 +36,16 @@ export default function Header() {
         </Link>
 
         <nav className={styles.nav}>
-          {links.map((link) => (
+          {navLinks.map((link) => (
             <Link key={link.href} href={link.href} className={styles.navLink} aria-current={pathname === link.href ? "page" : undefined}>
               {link.label}
             </Link>
           ))}
+          {canAccessManage ? (
+            <Link href="/manage" className={styles.navLink} aria-current={pathname === "/manage" ? "page" : undefined}>
+              {t(locale, "navManage")}
+            </Link>
+          ) : null}
         </nav>
 
         <div className={styles.actions}>
@@ -41,9 +53,11 @@ export default function Header() {
             {locale === "en" ? t(locale, "de") : t(locale, "en")}
           </button>
           {auth ? (
-            <button className={styles.loginButton} type="button" onClick={logout}>
-              {t(locale, "logout")}
-            </button>
+            <>
+              <button className={styles.loginButton} type="button" onClick={logout}>
+                {t(locale, "logout")}
+              </button>
+            </>
           ) : (
             <Link href="/auth/login" className={styles.loginButton}>
               {t(locale, "login")}

@@ -65,7 +65,10 @@ export function getCapabilities(role: UserRole | null): RoleCapabilities {
         canSubmitClubIdea: true,
       };
     case "ExchangeStudent":
-      return defaultCapabilities;
+      return {
+        ...defaultCapabilities,
+        canSubmitClubIdea: true,
+      };
     case "Professor":
     case "Teacher":
       return {

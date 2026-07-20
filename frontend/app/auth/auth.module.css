@@ -26,6 +26,16 @@
   padding: 0.75rem 1rem;
 }
 
+.guestLink {
+  text-align: center;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-md);
+  padding: 0.7rem 1rem;
+  text-decoration: none;
+  color: var(--color-gray-800);
+  font-weight: var(--font-weight-semibold);
+}
+
 .error {
   color: var(--color-danger);
   background: var(--color-gray-100);
@@ -36,4 +46,40 @@
 .muted {
   color: var(--color-gray-600);
   font-size: var(--font-size-sm);
+}
+
+.demoUsers {
+  margin-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-gray-200);
+  padding-top: var(--spacing-md);
+}
+
+.demoUsers h2 {
+  font-size: var(--font-size-base);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.demoButtons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-xs);
+}
+
+.demoButton {
+  background: var(--color-white);
+  border: 1px solid var(--srh-accent);
+  color: var(--color-black);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+}
+
+.demoButtons button {
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .demoButtons {
+    grid-template-columns: 1fr;
+  }
 }

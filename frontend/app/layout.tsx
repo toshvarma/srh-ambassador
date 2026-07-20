@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SRH Ambassador - Connect, Share, Grow",
+  title: "SRH Community Hub - Connect, Share, Grow",
   description: "A platform for SRH University students to connect, collaborate, and build community",
 };
 

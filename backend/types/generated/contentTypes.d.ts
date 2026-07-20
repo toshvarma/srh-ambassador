@@ -689,6 +689,8 @@ export interface ApiClubClub extends Struct.CollectionTypeSchema {
     minimumMembers: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<5>;
     publishedAt: Schema.Attribute.DateTime;
     recommendedFor: Schema.Attribute.String;
+    rejectionReason: Schema.Attribute.Text;
+    reviewedBy: Schema.Attribute.Relation<'manyToOne', 'api::user.user'>;
     shortDescription: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
@@ -722,6 +724,12 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
   };
   attributes: {
     attendees: Schema.Attribute.Relation<'manyToMany', 'api::user.user'>;
+    author: Schema.Attribute.Relation<'manyToOne', 'api::user.user'>;
+    authorName: Schema.Attribute.String;
+    category: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::news-category.news-category'
+    >;
     club: Schema.Attribute.Relation<'manyToOne', 'api::club.club'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -732,8 +740,14 @@ export interface ApiEventEvent extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::event.event'>;
     location: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    shortDescription: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 220;
+      }>;
     slug: Schema.Attribute.UID<'title'>;
     start_datetime: Schema.Attribute.DateTime;
+    tags: Schema.Attribute.Relation<'manyToMany', 'api::news-tag.news-tag'>;
+    thumbnailUrl: Schema.Attribute.String;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -950,6 +964,7 @@ export interface ApiNewsItemNewsItem extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    courseLabel: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -960,6 +975,7 @@ export interface ApiNewsItemNewsItem extends Struct.CollectionTypeSchema {
         };
       }>;
     featuredImage: Schema.Attribute.Media<'images'>;
+    featuredImageUrl: Schema.Attribute.String;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -1191,6 +1207,7 @@ export interface ApiUserUser extends Struct.CollectionTypeSchema {
       'api::news-item.news-item'
     >;
     publishedAt: Schema.Attribute.DateTime;
+    reviewedClubs: Schema.Attribute.Relation<'oneToMany', 'api::club.club'>;
     role: Schema.Attribute.Enumeration<
       [
         'Student',
