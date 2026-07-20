@@ -30,13 +30,25 @@
     },
     "role": {
       "type": "enumeration",
-      "enum": ["Student", "ExchangeStudent", "Professor", "Teacher", "Ambassador", "Admin", "SuperAdmin"],
+      "enum": [
+        "Student",
+        "ExchangeStudent",
+        "Professor",
+        "Teacher",
+        "Ambassador",
+        "Admin",
+        "SuperAdmin"
+      ],
       "required": true,
       "default": "Student"
     },
     "status": {
       "type": "enumeration",
-      "enum": ["active", "inactive", "pending"],
+      "enum": [
+        "active",
+        "inactive",
+        "pending"
+      ],
       "default": "pending"
     },
     "universityAffiliation": {
@@ -53,7 +65,9 @@
     "avatar": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "bio": {
       "type": "richtext",
