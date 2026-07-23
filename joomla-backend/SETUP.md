@@ -1,4 +1,4 @@
-# com_ambassador — Laragon Setup Guide
+﻿# com_ambassador — Laragon Setup Guide
 
 This guide walks you through installing and testing the `com_ambassador` Joomla component on a local Laragon + Joomla 5.x development environment.
 
@@ -9,29 +9,17 @@ This guide walks you through installing and testing the `com_ambassador` Joomla 
 | Requirement | Notes |
 |-------------|-------|
 | Laragon (latest) | Running with Apache + MySQL + PHP 8.1+ |
-| Joomla 5.x | Installed under Laragon (e.g. `C:\laragon\www\joomla`) |
-| Joomla local URL | e.g. `http://joomla.test` or `http://localhost/joomla` |
+| Joomla 5.x | Installed under Laragon — check your URL in the Laragon tray |
+| Joomla local URL | Check Laragon tray → folder name + `.test`, e.g. `http://joomla-cms.test` |
 | Node.js 18+ | For running the Next.js frontend |
-| Composer | Available in Laragon terminal or system PATH |
+
+> **No Composer needed.** The API uses only built-in PHP features (no external packages).
 
 ---
 
-## Step 1 — Install Composer dependencies
+## Step 1 — Package the component
 
-Open the Laragon terminal (or any terminal with PHP on PATH), navigate to the `joomla-backend/` directory in this repo, and run:
-
-```bash
-cd path\to\srh-ambassador\joomla-backend
-composer install
-```
-
-This installs `firebase/php-jwt` into `joomla-backend/vendor/`. The `vendor/` directory is gitignored; you must run this once before packaging.
-
----
-
-## Step 2 — Package the component
-
-A packaging script is included. From the `joomla-backend/` directory run:
+Open a terminal, navigate to `joomla-backend/` and run:
 
 ```bash
 php package.php
@@ -39,47 +27,38 @@ php package.php
 
 This creates `joomla-backend/com_ambassador.zip`.
 
-Alternatively on Windows:
-1. Select all folders/files inside `joomla-backend/` (administrator, api, components, com_ambassador.xml, vendor)
-2. Right-click → Send to → Compressed (zipped) folder → name it `com_ambassador.zip`
+**Alternative (no PHP on PATH):** manually ZIP the contents inside `joomla-backend/administrator/` and `joomla-backend/api/` plus the `com_ambassador.xml` manifest into a single `com_ambassador.zip`.
 
 ---
 
-## Step 3 — Install the component in Joomla
+## Step 2 — Install the component in Joomla
 
-1. Log in to your Joomla admin panel: `http://joomla.test/administrator`
+1. Log in to your Joomla admin panel (e.g. `http://joomla-cms.test/administrator`)
 2. Go to **System → Install → Extensions**
 3. Choose **Upload Package File** tab
 4. Upload `joomla-backend/com_ambassador.zip`
-5. Joomla will install the component and run the SQL install script automatically (creates all `#__ambassador_*` tables)
+5. Joomla installs the component and runs the SQL install script automatically (creates all `#__ambassador_*` tables)
 
 ---
 
-## Step 4 — Enable Joomla Web Services API
-
-1. In Joomla admin: **System → Manage → Plugins**
-2. Search for `webservices` — enable all plugins found (especially `plg_webservices_com_ambassador` if listed)
-3. Also ensure **System → API Access** is enabled (Joomla 5: it's on by default)
-
----
-
-## Step 5 — Run database setup scripts via phpMyAdmin
+## Step 3 — Run database setup scripts via phpMyAdmin
 
 Open phpMyAdmin: `http://localhost/phpmyadmin`
 
-Select your Joomla database (e.g. `joomla`), then run each script using the **Import** tab:
+Select your Joomla database, then run each script using the **Import** tab:
 
-### 5a. Create User Groups
+### 3a. Create User Groups
 Import: `joomla-backend/sql/setup_usergroups.sql`
 
-This creates the 7 role groups: Student, ExchangeStudent, Professor, Teacher, Ambassador, Admin, SuperAdmin.
+Creates 7 role groups: Student, ExchangeStudent, Professor, Teacher, Ambassador, Admin, SuperAdmin.
 
-### 5b. Seed sample users
+### 3b. Seed sample users
 Import: `joomla-backend/sql/seed_users.sql`
 
-This inserts the 7 demo accounts from `USERS.MD` with correct group assignments and role metadata.
+Inserts the 7 demo accounts from `USERS.MD` with group assignments and role metadata.
 
-> **Important:** These scripts use the table prefix `jos_`. If your Joomla installation uses a different prefix (visible in `configuration.php` as `$dbprefix`), you will need to find-replace `jos_` with your prefix before importing.
+> **Important:** These scripts use the table prefix `jos_`. If your Joomla uses a different prefix  
+> (check `$dbprefix` in `configuration.php`), find-replace `jos_` with yours before importing.
 
 **Sample credentials (from USERS.MD):**
 
@@ -95,54 +74,88 @@ This inserts the 7 demo accounts from `USERS.MD` with correct group assignments 
 
 ---
 
-## Step 6 — Configure CORS (allow Next.js frontend)
+## Step 4 — Install the standalone API entry point
 
-The Next.js frontend runs on `http://localhost:3000` and calls your Joomla API. Joomla must allow this cross-origin request.
+The API is served by a **standalone PHP file** (`srh-api/index.php`). This bypasses Joomla's complex routing entirely and is much easier to get running.
 
-Open your Joomla installation's root `.htaccess` file (e.g. `C:\laragon\www\joomla\.htaccess`) and add these lines at the very top, before any other rules:
+### 4a. Copy the file
+
+Copy `joomla-backend/standalone/srh-api/index.php` into a new `srh-api/` folder in your Joomla root:
+
+```
+C:\laragon\www\joomla-cms\srh-api\index.php    ← create this
+```
+
+(Replace `joomla-cms` with your actual Joomla folder name.)
+
+### 4b. Add one line to Joomla's `.htaccess`
+
+Open `C:\laragon\www\joomla-cms\.htaccess` and add this line **before** the final `RewriteRule .* index.php [L]` line:
 
 ```apache
-# Allow CORS for local Next.js frontend
-Header set Access-Control-Allow-Origin "http://localhost:3000"
-Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-Header set Access-Control-Allow-Headers "Content-Type, Authorization"
-Header set Access-Control-Allow-Credentials "true"
-
-RewriteEngine On
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ $1 [R=200,L]
+# SRH Ambassador standalone API
+RewriteRule ^srh-api(/.*)?$ srh-api/index.php [L,QSA]
 ```
 
-Then in Laragon: **right-click tray icon → Apache → Reload**.
+It should look like this at the end of the rewrite block:
+
+```apache
+# SRH Ambassador standalone API — must be BEFORE the Joomla catch-all
+RewriteRule ^srh-api(/.*)?$ srh-api/index.php [L,QSA]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule .* index.php [L]
+```
+
+### 4c. Reload Apache
+
+In the Laragon tray: right-click → Apache → Reload.
+
+### 4d. Test the health endpoint
+
+Open this in your browser:
+
+```
+http://joomla-cms.test/srh-api/health
+```
+
+You should see JSON like:
+```json
+{"status":"ok","api":"com_ambassador","joomla_root":"C:/laragon/www/joomla-cms","time":"..."}
+```
+
+If you see JSON — the API is wired up correctly. If you see a Joomla 404 page — check the `.htaccess` edit.
 
 ---
 
-## Step 7 — Add sample content (manual)
+## Step 5 — Add sample content (manual)
 
-After the component is installed and users are seeded, add a few sample categories and tags manually via the Joomla admin so the Manage page dropdowns have options:
+Add a few categories and tags so the frontend dropdowns have options:
 
 1. **Categories:** Joomla admin → **Content → Categories → New**
-   - Create 2–3 categories. In the **Component** field (or Extension field), type `com_ambassador`
-   - Example: "Campus News", "Events & Activities", "Club Announcements"
+   - Set the **Component** field to `com_ambassador`
+   - Create 2–3 categories, e.g. "Campus News", "Events & Activities", "Club Announcements"
 
 2. **Tags:** Joomla admin → **Components → Tags → New**
-   - Create 3–5 tags. Example: "Sports", "Academic", "Culture", "Technology", "Social"
+   - Create 3–5 tags, e.g. "Sports", "Academic", "Culture", "Technology", "Social"
 
 ---
 
-## Step 8 — Configure the frontend
+## Step 6 — Configure the frontend
 
-In `frontend/.env.local`, set:
+Create (or edit) `frontend/.env.local`:
 
 ```
-NEXT_PUBLIC_JOOMLA_API_URL=http://joomla.test
+NEXT_PUBLIC_JOOMLA_API_URL=http://joomla-cms.test
 ```
 
-(Replace `http://joomla.test` with your actual Laragon Joomla URL if different.)
+Replace `http://joomla-cms.test` with your actual Laragon Joomla URL if yours is different.  
+To find it: Laragon tray → left-click → your site name.
 
 ---
 
-## Step 9 — Run the frontend
+## Step 7 — Run the frontend
 
 ```bash
 cd frontend
@@ -154,14 +167,14 @@ Browse to `http://localhost:3000`.
 
 ---
 
-## Step 10 — Verify
+## Step 8 — Verify
 
 Walk through the 6 functional requirements:
 
-1. Visit `/clubs` — you should see the clubs listing (empty until you add sample clubs)
+1. Visit `/clubs` — clubs listing (empty until you add sample data)
 2. Log in as `student.sophia@srh.de` / `Student1234!` — profile should load with Student role
 3. As student: go to `/clubs/new` and submit a club proposal
-4. Log in as `ambassador.lars@srh.de` / `Ambassador1234!` — the Manage tab should appear with the pending club
+4. Log in as `ambassador.lars@srh.de` / `Ambassador1234!` — Manage tab should show pending club
 5. As ambassador: approve/reject the club proposal
 6. As professor (`prof.thomas@srh.de`): go to Manage → Create News / Create Event
 
@@ -169,20 +182,26 @@ Walk through the 6 functional requirements:
 
 ## Troubleshooting
 
-**CORS errors in browser console:**
-- Check that the `.htaccess` edits in Step 6 are at the very top of the file
-- Reload Apache in Laragon after every `.htaccess` change
+**"NetworkError" or login fails immediately:**
+- Confirm your `.env.local` has the right URL (`http://joomla-cms.test`, not `http://joomla.test`)
+- Visit `http://joomla-cms.test/srh-api/health` directly in your browser — if this shows Joomla 404, the `.htaccess` rule is missing or in the wrong place
+- Reload Apache after every `.htaccess` change
 
-**"Component not found" or 404 from API:**
-- Confirm the component is installed (Joomla admin → System → Manage → Extensions → search "ambassador")
-- Confirm `plg_webservices_com_ambassador` plugin is enabled
+**Health endpoint returns Joomla 404:**
+- The `.htaccess` line is in the wrong place or was not saved
+- Make sure the line is BEFORE `RewriteRule .* index.php [L]`
 
-**"Table doesn't exist" errors:**
-- The install SQL may have failed. Go to phpMyAdmin and manually import `joomla-backend/sql/install.mysql.sql` against your Joomla database (replace `#__` with your table prefix, e.g. `jos_`)
+**Health endpoint returns PHP error about "Joomla root not found":**
+- The `srh-api/` folder is not inside your Joomla root
+- Check that `srh-api/index.php` is at `C:\laragon\www\joomla-cms\srh-api\index.php`
 
 **Login returns 401:**
-- Check that the JWT secret in `joomla-backend/api/components/com_ambassador/src/Controller/AuthController.php` matches what's set (default: uses a secret from Joomla's configuration.php secret field)
+- Double-check email + password match the credentials table above
+- Run the seed script again if unsure
+
+**"Table doesn't exist" PHP errors:**
+- The install SQL failed — in phpMyAdmin, manually import `administrator/components/com_ambassador/sql/install.mysql.sql` (replace `#__` with your table prefix)
 
 **Wrong table prefix:**
-- Check `$dbprefix` in `C:\laragon\www\joomla\configuration.php`
-- All SQL scripts use `jos_` as the example prefix — replace with yours if different
+- Check `$dbprefix` in `C:\laragon\www\joomla-cms\configuration.php`
+- All SQL scripts default to `jos_` — find-replace if your prefix is different
