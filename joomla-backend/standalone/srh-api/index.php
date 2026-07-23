@@ -148,7 +148,11 @@ function jwtIssue(array $payload): string {
 
 function jwtVerify(): ?array {
     global $jwtSecret;
-    $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    // Apache CGI/FastCGI may not set HTTP_AUTHORIZATION; check all known sources
+    $auth = $_SERVER['HTTP_AUTHORIZATION']
+        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+        ?? (function_exists('getallheaders') ? (getallheaders()['Authorization'] ?? getallheaders()['authorization'] ?? '') : '')
+        ?? '';
     if (!str_starts_with($auth, 'Bearer ')) return null;
     $parts = explode('.', substr($auth, 7));
     if (count($parts) !== 3) return null;
@@ -199,6 +203,12 @@ set_exception_handler(function (\Throwable $e): void {
 // ── Health check ──────────────────────────────────────────────────────────────
 
 if ($sub === '/health') {
+    // Check all possible sources for the Authorization header
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION']
+        ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+        ?? getallheaders()['Authorization']
+        ?? getallheaders()['authorization']
+        ?? '(not set)';
     ok([
         'status'       => 'ok',
         'api'          => 'srh-ambassador',
@@ -208,6 +218,7 @@ if ($sub === '/health') {
         'path_info'    => $_SERVER['PATH_INFO'] ?? '(not set)',
         'request_uri'  => $_SERVER['REQUEST_URI'] ?? '(not set)',
         'resolved_sub' => $sub,
+        'auth_header'  => substr($authHeader, 0, 20) . (strlen($authHeader) > 20 ? '...' : ''),
     ]);
 }
 

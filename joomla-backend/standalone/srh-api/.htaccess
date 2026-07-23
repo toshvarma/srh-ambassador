@@ -1,0 +1,2 @@
+# Pass Authorization header to PHP (required for JWT auth in CGI/FastCGI mode)
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
