@@ -12,6 +12,10 @@
  */
 declare(strict_types=1);
 
+error_reporting(0);
+ini_set('display_errors', '0');
+ob_start();
+
 // ── CORS ─────────────────────────────────────────────────────────────────────
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
 header("Access-Control-Allow-Origin: {$origin}");
@@ -82,11 +86,13 @@ function uniqueSlug(string $title, string $table): string {
 }
 
 function ok($data): void {
+    ob_end_clean();
     echo json_encode(['data' => $data], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 function err(int $code, string $msg): void {
+    ob_end_clean();
     http_response_code($code);
     echo json_encode(['error' => $msg]);
     exit;
