@@ -296,23 +296,34 @@ export default function ClubNewPage() {
             </div>
             <div className={styles.field}>
               <label className={styles.label}>{en ? "Cover Image" : "Titelbild"}</label>
-              <input
-                ref={fileInputRef}
-                className={styles.input}
-                type="file"
-                accept={ACCEPTED_IMAGE_EXTS}
-                onChange={handleFileChange}
-              />
-              {coverImagePreview && (
-                <img
-                  src={coverImagePreview}
-                  alt="Preview"
-                  style={{ marginTop: "0.5rem", maxHeight: "120px", borderRadius: "6px", objectFit: "cover" }}
-                />
+              {coverImagePreview ? (
+                <div className={styles.imagePreviewWrap}>
+                  <img src={coverImagePreview} alt="Preview" className={styles.imagePreview} />
+                  <button
+                    type="button"
+                    className={styles.imageRemove}
+                    onClick={() => {
+                      setCoverImageFile(null);
+                      setCoverImagePreview("");
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    aria-label="Remove image"
+                  >✕</button>
+                </div>
+              ) : (
+                <label className={styles.imageDropzone}>
+                  <span className={styles.imageDropzoneIcon}>🖼</span>
+                  <span>{en ? "Click to upload" : "Klicken zum Hochladen"}</span>
+                  <span className={styles.imageDropzoneHint}>PNG, JPG, WEBP, GIF</span>
+                  <input
+                    ref={fileInputRef}
+                    className={styles.fileInputHidden}
+                    type="file"
+                    accept={ACCEPTED_IMAGE_EXTS}
+                    onChange={handleFileChange}
+                  />
+                </label>
               )}
-              <span style={{ fontSize: "0.75rem", color: "#888", marginTop: "0.25rem", display: "block" }}>
-                {en ? "Accepted: PNG, JPG, WEBP, GIF" : "Erlaubt: PNG, JPG, WEBP, GIF"}
-              </span>
             </div>
           </div>
 
