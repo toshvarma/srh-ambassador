@@ -211,6 +211,26 @@ if ($sub === '/health') {
     ]);
 }
 
+// ── Debug: table check ────────────────────────────────────────────────────────
+
+if ($sub === '/debug/tables') {
+    $required = ['ambassador_clubs','ambassador_club_members','ambassador_events',
+                 'ambassador_event_tags','ambassador_event_attendees',
+                 'ambassador_news','ambassador_news_tags','ambassador_user_meta',
+                 'users','categories','tags'];
+    $result = [];
+    foreach ($required as $t) {
+        $full = $prefix . $t;
+        try {
+            $st = $pdo->query("SELECT COUNT(*) FROM `{$full}`");
+            $result[$full] = ['exists' => true, 'rows' => (int)$st->fetchColumn()];
+        } catch (\Throwable $e) {
+            $result[$full] = ['exists' => false, 'error' => $e->getMessage()];
+        }
+    }
+    ok($result);
+}
+
 // ── POST /auth/login ──────────────────────────────────────────────────────────
 
 if ($sub === '/auth/login' && $method === 'POST') {
