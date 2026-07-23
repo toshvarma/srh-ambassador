@@ -1,0 +1,33 @@
+# ── Node ──────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.*.example
+
+# ── Next.js (frontend) ────────────────────────────────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.vercel/
+*.tsbuildinfo
+
+# ── Joomla / PHP (joomla-backend) ─────────────────────────────────────────────
+joomla-backend/vendor/        # Composer packages – run `composer install` locally
+joomla-backend/com_ambassador.zip
+
+# ── OS artefacts ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
+.idea/
+*.suo
+*.user
+.vscode/settings.json
