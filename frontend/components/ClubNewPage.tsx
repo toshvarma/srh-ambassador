@@ -8,13 +8,13 @@ import { useLocale } from "@/context/LocaleContext";
 import { createStrapiEntry } from "@/lib/strapi";
 import styles from "./ClubNewPage.module.css";
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://localhost:1337";
+const JOOMLA_API_URL = process.env.NEXT_PUBLIC_JOOMLA_API_URL ?? process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://joomla.test";
 const ACCEPTED_IMAGE_EXTS = ".png,.jpg,.jpeg,.webp";
 
 async function uploadImageToStrapi(file: File, token: string): Promise<string> {
   const body = new FormData();
   body.append("files", file, file.name);
-  const res = await fetch(`${STRAPI_URL}/api/upload`, {
+  const res = await fetch(`${JOOMLA_API_URL}/api/index.php/v1/ambassador/upload`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body,

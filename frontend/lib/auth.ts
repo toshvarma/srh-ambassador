@@ -1,7 +1,7 @@
 import { fetchStrapi, fetchStrapiCollection } from "@/lib/strapi";
 import { parseRole, type UserRole } from "@/lib/roles";
 
-const TOKEN_KEY = "strapi_token";
+const TOKEN_KEY = "joomla_token";
 
 export type AuthUser = {
   id: number;
@@ -25,11 +25,6 @@ export type AuthState = {
     email?: string;
     role?: string;
   } | null;
-};
-
-type LoginResponse = {
-  jwt: string;
-  user: AuthUser;
 };
 
 type CustomUser = {
@@ -70,75 +65,89 @@ export async function resolveProfile(token: string, email: string): Promise<Cust
 }
 
 export async function login(email: string, password: string): Promise<AuthState> {
-  const payload = (await fetchStrapi("/auth/local", {
+  // com_ambassador login endpoint (replaces Strapi /auth/local)
+  const payload = (await fetchStrapi("/api/index.php/v1/ambassador/auth/login", {
     method: "POST",
     body: JSON.stringify({
       identifier: email,
       password,
     }),
-  })) as unknown as LoginResponse;
+    skipApiPrefix: true,
+  })) as unknown as { data: { jwt: string; user: AuthUser & { firstName?: string; lastName?: string; role?: string } } };
 
-  if (!payload.jwt || !payload.user) {
+  const loginData = payload.data ?? (payload as unknown as { jwt: string; user: AuthUser });
+  const jwt = (loginData as { jwt?: string }).jwt ?? (payload as unknown as { jwt: string }).jwt;
+  const user = (loginData as { user?: AuthUser }).user ?? (payload as unknown as { user: AuthUser }).user;
+
+  if (!jwt || !user) {
     throw new Error("Invalid login response");
   }
 
-  const profile = await resolveProfile(payload.jwt, payload.user.email);
-  const appRole = parseRole(profile?.role ?? null);
+  // Build appRole from the role field returned directly in the login response
+  const roleString = (user as { role?: string }).role ?? null;
+  const appRole = parseRole(roleString);
+
+  // Build a minimal profile from the login response (avoids a second round-trip)
+  const profile: CustomUser = {
+    id: user.id,
+    documentId: String(user.id),
+    firstName: (user as { firstName?: string }).firstName,
+    lastName: (user as { lastName?: string }).lastName,
+    email: user.email,
+    role: roleString ?? undefined,
+  };
+
   if (typeof window !== "undefined") {
-    localStorage.setItem(TOKEN_KEY, payload.jwt);
+    localStorage.setItem(TOKEN_KEY, jwt);
   }
 
   return {
-    token: payload.jwt,
-    user: payload.user,
+    token: jwt,
+    user,
     appRole,
     profile,
   };
 }
 
-export async function signup(input: {
+// User registration is not available — accounts are pre-created by administrators.
+export async function signup(_input: {
   username: string;
   email: string;
   password: string;
 }): Promise<AuthState> {
-  const payload = (await fetchStrapi("/auth/local/register", {
-    method: "POST",
-    body: JSON.stringify(input),
-  })) as unknown as LoginResponse;
-
-  if (!payload.jwt || !payload.user) {
-    throw new Error("Invalid signup response");
-  }
-
-  const profile = await resolveProfile(payload.jwt, payload.user.email);
-  const appRole = parseRole(profile?.role ?? null);
-  if (typeof window !== "undefined") {
-    localStorage.setItem(TOKEN_KEY, payload.jwt);
-  }
-
-  return {
-    token: payload.jwt,
-    user: payload.user,
-    appRole,
-    profile,
-  };
+  throw new Error(
+    "User registration is not available. Please sign in with your pre-assigned university credentials."
+  );
 }
 
 export async function fetchMe(token: string): Promise<AuthState | null> {
-  const payload = (await fetchStrapi("/users/me?populate=role", {
+  // com_ambassador /users/me endpoint (replaces Strapi /users/me)
+  const payload = (await fetchStrapi("/api/index.php/v1/ambassador/users/me", {
     token,
     skipApiPrefix: true,
-  })) as unknown as AuthUser;
+  })) as unknown as { data: AuthUser & { role?: string; firstName?: string; lastName?: string } };
 
-  if (!payload || !payload.email) {
+  const userData = (payload as unknown as { data?: AuthUser }).data ?? (payload as unknown as AuthUser);
+
+  if (!userData || !(userData as { email?: string }).email) {
     return null;
   }
 
-  const profile = await resolveProfile(token, payload.email);
-  const appRole = parseRole(profile?.role ?? null);
+  const me = userData as AuthUser & { role?: string; firstName?: string; lastName?: string };
+  const appRole = parseRole(me.role ?? null);
+
+  const profile: CustomUser = {
+    id: me.id,
+    documentId: String(me.id),
+    firstName: me.firstName,
+    lastName: me.lastName,
+    email: me.email,
+    role: me.role,
+  };
+
   return {
     token,
-    user: payload,
+    user: me,
     appRole,
     profile,
   };

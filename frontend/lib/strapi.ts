@@ -1,4 +1,19 @@
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://localhost:1337";
+// Joomla backend base URL (replaces Strapi).
+// Set NEXT_PUBLIC_JOOMLA_API_URL in frontend/.env.local
+// e.g. NEXT_PUBLIC_JOOMLA_API_URL=http://joomla.test
+const STRAPI_URL = process.env.NEXT_PUBLIC_JOOMLA_API_URL ?? process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://joomla.test";
+
+// Maps the Strapi-style resource paths used throughout the app to the
+// equivalent com_ambassador Web Services API paths.
+const PATH_MAP: Record<string, string> = {
+  "/clubs":            "/api/index.php/v1/ambassador/clubs",
+  "/events":           "/api/index.php/v1/ambassador/events",
+  "/news-items":       "/api/index.php/v1/ambassador/news-items",
+  "/news-categories":  "/api/index.php/v1/ambassador/news-categories",
+  "/news-tags":        "/api/index.php/v1/ambassador/news-tags",
+  "/users":            "/api/index.php/v1/ambassador/users",
+  "/upload":           "/api/index.php/v1/ambassador/upload",
+};
 
 type StrapiResponse<T> = {
   data: T;
@@ -26,15 +41,23 @@ function toApiPath(path: string, skipApiPrefix = false): string {
     return path;
   }
 
+  // Check the exact path or a path with a suffix (e.g. /clubs/some-slug)
+  for (const [prefix, mapped] of Object.entries(PATH_MAP)) {
+    if (path === prefix) {
+      return mapped;
+    }
+    if (path.startsWith(prefix + "/")) {
+      return mapped + path.slice(prefix.length);
+    }
+  }
+
+  // Already an absolute API path — pass through
   if (path.startsWith("/api/")) {
     return path;
   }
 
-  if (path.startsWith("/")) {
-    return `/api${path}`;
-  }
-
-  return `/api/${path}`;
+  // Fallback: prepend Joomla ambassador base (shouldn't normally be reached)
+  return "/api/index.php/v1/ambassador" + (path.startsWith("/") ? path : "/" + path);
 }
 
 function normalizeEntry<T extends Record<string, unknown>>(entry: Record<string, unknown>): StrapiEntry<T> {
@@ -94,7 +117,7 @@ export async function fetchStrapi(path: string, options: FetchStrapiOptions = {}
 
   const payload = await response.json();
   if (!response.ok) {
-    const message = payload?.error?.message || payload?.message || `Strapi request failed: ${response.statusText}`;
+    const message = payload?.error?.message || payload?.message || `Request failed: ${response.statusText}`;
     throw new Error(message);
   }
 
