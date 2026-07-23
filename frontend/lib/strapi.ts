@@ -4,15 +4,15 @@
 const STRAPI_URL = process.env.NEXT_PUBLIC_JOOMLA_API_URL ?? process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://joomla.test";
 
 // Maps the Strapi-style resource paths used throughout the app to the
-// equivalent com_ambassador Web Services API paths.
+// equivalent com_ambassador standalone API paths (srh-api/index.php).
 const PATH_MAP: Record<string, string> = {
-  "/clubs":            "/api/index.php/v1/ambassador/clubs",
-  "/events":           "/api/index.php/v1/ambassador/events",
-  "/news-items":       "/api/index.php/v1/ambassador/news-items",
-  "/news-categories":  "/api/index.php/v1/ambassador/news-categories",
-  "/news-tags":        "/api/index.php/v1/ambassador/news-tags",
-  "/users":            "/api/index.php/v1/ambassador/users",
-  "/upload":           "/api/index.php/v1/ambassador/upload",
+  "/clubs":            "/srh-api/clubs",
+  "/events":           "/srh-api/events",
+  "/news-items":       "/srh-api/news-items",
+  "/news-categories":  "/srh-api/news-categories",
+  "/news-tags":        "/srh-api/news-tags",
+  "/users":            "/srh-api/users",
+  "/upload":           "/srh-api/upload",
 };
 
 type StrapiResponse<T> = {

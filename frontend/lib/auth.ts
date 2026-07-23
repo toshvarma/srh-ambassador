@@ -65,8 +65,8 @@ export async function resolveProfile(token: string, email: string): Promise<Cust
 }
 
 export async function login(email: string, password: string): Promise<AuthState> {
-  // com_ambassador login endpoint (replaces Strapi /auth/local)
-  const payload = (await fetchStrapi("/api/index.php/v1/ambassador/auth/login", {
+  // com_ambassador login endpoint
+  const payload = (await fetchStrapi("/srh-api/auth/login", {
     method: "POST",
     body: JSON.stringify({
       identifier: email,
@@ -122,7 +122,7 @@ export async function signup(_input: {
 
 export async function fetchMe(token: string): Promise<AuthState | null> {
   // com_ambassador /users/me endpoint (replaces Strapi /users/me)
-  const payload = (await fetchStrapi("/api/index.php/v1/ambassador/users/me", {
+  const payload = (await fetchStrapi("/srh-api/users/me", {
     token,
     skipApiPrefix: true,
   })) as unknown as { data: AuthUser & { role?: string; firstName?: string; lastName?: string } };
