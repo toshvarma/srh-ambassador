@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * SRH Ambassador — Self-contained REST API
  *
