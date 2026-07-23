@@ -2,28 +2,9 @@
 -- fix_tables.sql
 -- Run this in phpMyAdmin → SQL tab (select your Joomla database first).
 --
--- PURPOSE: The original install.mysql.sql used `#srhub_` as table prefix
--- instead of the correct `#__` Joomla placeholder, creating tables with a
--- literal '#' in their names. This script renames them to the correct names
--- (srhub_ambassador_*) and creates any that are still missing.
---
--- Run this ONCE, then verify in phpMyAdmin that all srhub_ambassador_* tables
--- exist. Ignore "Table doesn't exist" errors on the RENAME lines if a table
--- was never created.
+-- Creates the correct srhub_ambassador_* tables.
+-- After running, manually delete any tables starting with #srhub_ if present.
 -- =============================================================================
-
--- ── Step 1: Rename any tables that were created with the wrong #srhub_ prefix ─
-
-RENAME TABLE IF EXISTS `#srhub_ambassador_user_meta`      TO `srhub_ambassador_user_meta`;
-RENAME TABLE IF EXISTS `#srhub_ambassador_clubs`          TO `srhub_ambassador_clubs`;
-RENAME TABLE IF EXISTS `#srhub_ambassador_club_members`   TO `srhub_ambassador_club_members`;
-RENAME TABLE IF EXISTS `#srhub_ambassador_events`         TO `srhub_ambassador_events`;
-RENAME TABLE IF EXISTS `#srhub_ambassador_event_tags`     TO `srhub_ambassador_event_tags`;
-RENAME TABLE IF EXISTS `#srhub_ambassador_event_attendees` TO `srhub_ambassador_event_attendees`;
-RENAME TABLE IF EXISTS `#srhub_ambassador_news`           TO `srhub_ambassador_news`;
-RENAME TABLE IF EXISTS `#srhub_ambassador_news_tags`      TO `srhub_ambassador_news_tags`;
-
--- ── Step 2: Create any tables that are still missing (correct names) ──────────
 
 CREATE TABLE IF NOT EXISTS `srhub_ambassador_user_meta` (
   `user_id`    INT(11)      NOT NULL,
