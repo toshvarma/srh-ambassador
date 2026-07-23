@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 error_reporting(0);
 ini_set('display_errors', '0');
-ob_start();
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
@@ -86,13 +85,11 @@ function uniqueSlug(string $title, string $table): string {
 }
 
 function ok($data): void {
-    ob_end_clean();
     echo json_encode(['data' => $data], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 function err(int $code, string $msg): void {
-    ob_end_clean();
     http_response_code($code);
     echo json_encode(['error' => $msg]);
     exit;
@@ -173,19 +170,45 @@ function requireRole(array $jwt, array $roles): void {
 }
 
 // ── Routing ───────────────────────────────────────────────────────────────────
-// Supports both PATH_INFO (/srh-api/index.php/clubs) and direct (/srh-api/clubs via rewrite)
+// Supports PATH_INFO: http://joomla-cms.test/srh-api/index.php/clubs
 $sub = $_SERVER['PATH_INFO'] ?? '';
-if (!$sub) {
+if (!$sub || $sub === '/') {
+    // Fallback: extract from REQUEST_URI
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
-    $sub = (string)preg_replace('#.*/srh-api(?:/index\.php)?#', '', $uri);
+    // Strip everything up to and including index.php
+    if (preg_match('#/srh-api/index\.php(.*)#', $uri, $m)) {
+        $sub = $m[1];
+    } elseif (preg_match('#/srh-api(.*)#', $uri, $m)) {
+        $sub = $m[1];
+    }
 }
 $sub    = '/' . ltrim($sub ?: '', '/');
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
 
+// ── Global exception wrapper ──────────────────────────────────────────────────
+// Any uncaught exception becomes a JSON 500 instead of an empty/HTML response
+set_exception_handler(function (\Throwable $e): void {
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode(['error' => $e->getMessage(), 'type' => get_class($e)]);
+    exit;
+});
+
 // ── Health check ──────────────────────────────────────────────────────────────
 
 if ($sub === '/health') {
-    ok(['status' => 'ok', 'api' => 'srh-ambassador', 'db' => $jConfig->db, 'prefix' => $prefix, 'time' => date('c')]);
+    ok([
+        'status'       => 'ok',
+        'api'          => 'srh-ambassador',
+        'db'           => $jConfig->db,
+        'prefix'       => $prefix,
+        'time'         => date('c'),
+        'path_info'    => $_SERVER['PATH_INFO'] ?? '(not set)',
+        'request_uri'  => $_SERVER['REQUEST_URI'] ?? '(not set)',
+        'resolved_sub' => $sub,
+    ]);
 }
 
 // ── POST /auth/login ──────────────────────────────────────────────────────────
