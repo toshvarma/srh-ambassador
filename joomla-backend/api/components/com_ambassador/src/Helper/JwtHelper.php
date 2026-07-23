@@ -1,11 +1,9 @@
-<?php
+﻿<?php
 
 declare(strict_types=1);
 
 namespace SRH\Component\Ambassador\Api\Helper;
 
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use Joomla\CMS\Factory;
 
 // phpcs:disable PSR1.Files.SideEffects
@@ -13,40 +11,53 @@ use Joomla\CMS\Factory;
 // phpcs:enable PSR1.Files.SideEffects
 
 /**
- * JWT helper — issues and verifies tokens for the Ambassador API.
+ * JWT helper — issues and verifies HS256 tokens with no external dependencies.
  *
- * The secret is derived from Joomla's own $secret (configuration.php) so no
- * extra environment variable is needed.
+ * The HMAC secret is derived from Joomla own $secret (configuration.php) so
+ * no extra environment variable is needed.
  */
 class JwtHelper
 {
-    private const ALGORITHM = 'HS256';
-    private const TTL       = 86400 * 30; // 30 days
+    private const TTL = 86400 * 30; // 30 days
+
+    // -- Minimal HS256 implementation -----------------------------------------
+
+    private static function b64url(string $data): string
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    private static function b64decode(string $data): string
+    {
+        $pad = (4 - strlen($data) % 4) % 4;
+        return base64_decode(strtr($data, '-_', '+/') . str_repeat('=', $pad));
+    }
 
     private static function secret(): string
     {
-        $app = Factory::getApplication();
-        /** @var \Joomla\Registry\Registry $config */
+        $app    = Factory::getApplication();
         $config = $app->getConfig();
         $joomlaSecret = $config->get('secret', 'srh-ambassador-fallback');
-
         return hash('sha256', 'srh_ambassador_jwt_' . $joomlaSecret);
     }
+
+    // -- Public API -----------------------------------------------------------
 
     /**
      * Issue a signed JWT for the given user payload.
      *
-     * @param array<string,mixed> $payload  Must include at minimum: sub (user id), email, role
+     * @param array<string,mixed> $payload  Must include at minimum: sub, email, role
      */
     public static function issue(array $payload): string
     {
-        $now = time();
-        $claims = array_merge($payload, [
-            'iat' => $now,
-            'exp' => $now + self::TTL,
-        ]);
+        $now    = time();
+        $claims = array_merge($payload, ['iat' => $now, 'exp' => $now + self::TTL]);
 
-        return JWT::encode($claims, self::secret(), self::ALGORITHM);
+        $header  = self::b64url((string) json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
+        $body    = self::b64url((string) json_encode($claims));
+        $sig     = self::b64url(hash_hmac('sha256', "{$header}.{$body}", self::secret(), true));
+
+        return "{$header}.{$body}.{$sig}";
     }
 
     /**
@@ -56,25 +67,39 @@ class JwtHelper
      */
     public static function verify(): ?array
     {
-        $headers = function_exists('getallheaders') ? getallheaders() : [];
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
-        if (empty($authHeader) || !str_starts_with($authHeader, 'Bearer ')) {
+        if ($authHeader === '' || !str_starts_with($authHeader, 'Bearer ')) {
             return null;
         }
 
         $token = substr($authHeader, 7);
+        $parts = explode('.', $token);
 
-        try {
-            $decoded = JWT::decode($token, new Key(self::secret(), self::ALGORITHM));
-            return (array) $decoded;
-        } catch (\Throwable) {
+        if (count($parts) !== 3) {
             return null;
         }
+
+        [$header, $body, $sig] = $parts;
+
+        $expected = self::b64url(hash_hmac('sha256', "{$header}.{$body}", self::secret(), true));
+        if (!hash_equals($expected, $sig)) {
+            return null;
+        }
+
+        $claims = json_decode(self::b64decode($body), true);
+        if (!is_array($claims)) {
+            return null;
+        }
+        if (isset($claims['exp']) && $claims['exp'] < time()) {
+            return null; // expired
+        }
+
+        return $claims;
     }
 
     /**
-     * Require a valid JWT. Sends a 401 JSON response and exits if missing/invalid.
+     * Require a valid JWT. Sends 401 and exits if missing/invalid.
      *
      * @return array<string,mixed>  Decoded JWT payload.
      */
@@ -92,7 +117,7 @@ class JwtHelper
     }
 
     /**
-     * Check that the authenticated user has one of the given roles.
+     * Require the authenticated user to have one of the given roles.
      * Sends 403 and exits if the role is not permitted.
      *
      * @param array<string,mixed> $jwt    Decoded JWT payload.
@@ -104,7 +129,7 @@ class JwtHelper
         if (!in_array($userRole, $roles, true)) {
             http_response_code(403);
             header('Content-Type: application/json');
-            echo json_encode(['errors' => [['title' => 'Forbidden', 'detail' => "Role '{$userRole}' is not permitted for this action."]]]);
+            echo json_encode(['errors' => [['title' => 'Forbidden', 'detail' => "Role '{$userRole}' is not permitted."]]]);
             exit;
         }
     }
