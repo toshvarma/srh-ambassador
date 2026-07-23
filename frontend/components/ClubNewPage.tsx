@@ -14,7 +14,7 @@ const ACCEPTED_IMAGE_EXTS = ".png,.jpg,.jpeg,.webp";
 async function uploadImageToStrapi(file: File, token: string): Promise<string> {
   const body = new FormData();
   body.append("files", file, file.name);
-  const res = await fetch(`${JOOMLA_API_URL}/srh-api/upload`, {
+  const res = await fetch(`${JOOMLA_API_URL}/srh-api/index.php/upload`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body,
