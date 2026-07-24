@@ -202,6 +202,13 @@
   border-color: var(--srh-accent);
 }
 
+.counter {
+  margin: -0.2rem 0 0;
+  text-align: right;
+  color: var(--color-gray-500);
+  font-size: var(--font-size-xs);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

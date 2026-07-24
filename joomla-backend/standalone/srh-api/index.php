@@ -99,6 +99,29 @@ function body(): array {
     return json_decode((string)file_get_contents('php://input'), true) ?? [];
 }
 
+function normalizeRole(?string $rawRole, string $email = '', string $username = ''): string {
+    $role = strtolower(str_replace([' ', '-', '_'], '', trim((string)$rawRole)));
+    if ($role === 'ambassador' || str_contains(strtolower($email), 'ambassador') || str_contains(strtolower($username), 'ambassador')) {
+        return 'Ambassador';
+    }
+    return match ($role) {
+        'exchangestudent' => 'ExchangeStudent',
+        'professor' => 'Professor',
+        'teacher' => 'Teacher',
+        'admin' => 'Admin',
+        'superadmin' => 'SuperAdmin',
+        default => 'Student',
+    };
+}
+
+function enforceMaxLength(?string $value, int $max, string $field): void {
+    if ($value === null) return;
+    $length = function_exists('mb_strlen') ? (int)mb_strlen($value) : strlen($value);
+    if ($length > $max) {
+        err(422, "{$field} exceeds maximum length of {$max} characters");
+    }
+}
+
 function fetchTags(string $joinTable, string $idCol, int $id): array {
     global $pdo, $prefix;
     $st = $pdo->prepare("SELECT t.id, t.title FROM `{$prefix}tags` t
@@ -127,11 +150,56 @@ function fetchUser(?int $userId): ?array {
     $st->execute([$userId]);
     $r = $st->fetch();
     if (!$r) return null;
+    $role = normalizeRole($r['app_role'] ?? null, (string)$r['email'], (string)$r['username']);
     return ['id' => (int)$r['id'], 'documentId' => (string)$r['id'],
             'username' => $r['username'], 'email' => $r['email'],
             'firstName' => $r['first_name'] ?? '', 'lastName' => $r['last_name'] ?? '',
-            'role' => $r['app_role'] ?? 'Student',
+            'role' => $role,
             'avatar' => $r['avatar_url'] ? ['url' => $r['avatar_url']] : null];
+}
+
+function eventImageColumn(): string {
+    global $pdo, $prefix;
+    static $resolved = null;
+    if ($resolved !== null) return $resolved;
+
+    $table = "`{$prefix}ambassador_events`";
+    $hasThumbnail = $pdo->query("SHOW COLUMNS FROM {$table} LIKE 'thumbnail_url'")->fetch();
+    if ($hasThumbnail) {
+        $resolved = 'thumbnail_url';
+        return $resolved;
+    }
+
+    $hasCover = $pdo->query("SHOW COLUMNS FROM {$table} LIKE 'cover_image'")->fetch();
+    if ($hasCover) {
+        $resolved = 'cover_image';
+        return $resolved;
+    }
+
+    $resolved = 'thumbnail_url';
+    return $resolved;
+}
+
+function eventSummaryColumn(): string {
+    global $pdo, $prefix;
+    static $resolved = null;
+    if ($resolved !== null) return $resolved;
+
+    $table = "`{$prefix}ambassador_events`";
+    $hasShortDescription = $pdo->query("SHOW COLUMNS FROM {$table} LIKE 'short_description'")->fetch();
+    if ($hasShortDescription) {
+        $resolved = 'short_description';
+        return $resolved;
+    }
+
+    $hasExcerpt = $pdo->query("SHOW COLUMNS FROM {$table} LIKE 'excerpt'")->fetch();
+    if ($hasExcerpt) {
+        $resolved = 'excerpt';
+        return $resolved;
+    }
+
+    $resolved = '';
+    return $resolved;
 }
 
 // ── JWT (inline HS256, no external library needed) ────────────────────────────
@@ -260,7 +328,7 @@ if ($sub === '/auth/login' && $method === 'POST') {
 
     if (!$user || !password_verify($password, (string)$user['password'])) err(401, 'Invalid email or password');
 
-    $role = $user['app_role'] ?? 'Student';
+    $role = normalizeRole($user['app_role'] ?? null, (string)$user['email'], (string)$user['username']);
     $jwt  = jwtIssue(['sub' => (int)$user['id'], 'email' => $user['email'],
                       'username' => $user['username'], 'role' => $role,
                       'firstName' => $user['first_name'] ?? '', 'lastName' => $user['last_name'] ?? '']);
@@ -300,7 +368,7 @@ if ($sub === '/users' && $method === 'GET') {
     ok(array_map(fn($u) => ['id' => (int)$u['id'], 'documentId' => (string)$u['id'],
         'username' => $u['username'], 'email' => $u['email'],
         'firstName' => $u['first_name'] ?? '', 'lastName' => $u['last_name'] ?? '',
-        'role' => $u['app_role'] ?? 'Student',
+        'role' => normalizeRole($u['app_role'] ?? null, (string)$u['email'], (string)$u['username']),
         'avatar' => $u['avatar_url'] ? ['url' => $u['avatar_url']] : null,
     ], $st->fetchAll()));
 }
@@ -317,7 +385,7 @@ function clubMembers(int $clubId): array {
     $st->execute([$clubId]);
     return array_map(fn($u) => ['id' => (int)$u['id'], 'documentId' => (string)$u['id'],
         'email' => $u['email'], 'firstName' => $u['first_name'] ?? '', 'lastName' => $u['last_name'] ?? '',
-        'role' => $u['app_role'] ?? 'Student'], $st->fetchAll());
+        'role' => normalizeRole($u['app_role'] ?? null, (string)$u['email'])], $st->fetchAll());
 }
 
 function fmtClub(array $c): array {
@@ -327,6 +395,7 @@ function fmtClub(array $c): array {
         'title'              => $c['title'],
         'slug'               => $c['slug'],
         'shortDescription'   => $c['short_description'] ?? '',
+        'detailedDescription'=> $c['description'] ?? '',
         'description'        => $c['description'] ?? '',
         'coverImage'         => $c['cover_image'] ? ['url' => $c['cover_image']] : null,
         'contactEmail'       => $c['contact_email'] ?? '',
@@ -372,6 +441,9 @@ if ($sub === '/clubs' && $method === 'POST') {
     $b    = body()['data'] ?? body();
     $slug = uniqueSlug($b['title'] ?? 'club', 'ambassador_clubs');
     $now  = date('Y-m-d H:i:s');
+    $clubDescription = (string)($b['detailedDescription'] ?? $b['description'] ?? '');
+    enforceMaxLength($clubDescription, 2500, 'Club description');
+    enforceMaxLength(($b['signupNotes'] ?? null), 2500, 'Signup notes');
 
     $st = $pdo->prepare("INSERT INTO `{$prefix}ambassador_clubs`
         (document_id,title,slug,short_description,description,cover_image,contact_email,
@@ -379,7 +451,7 @@ if ($sub === '/clubs' && $method === 'POST') {
         VALUES (?,?,?,?,?,?,?,?,?,'pending',?,1,?,?)");
     $st->execute([uuid(), $b['title'] ?? '', $slug,
         $b['shortDescription'] ?? $b['short_description'] ?? '',
-        $b['description'] ?? '',
+        $clubDescription,
         $b['coverImage']['url'] ?? $b['cover_image'] ?? null,
         $b['contactEmail'] ?? $b['contact_email'] ?? '',
         (int)($b['maxMembers'] ?? $b['max_members'] ?? 0),
@@ -432,6 +504,8 @@ if (preg_match('#^/clubs/([^/]+)$#', $sub, $m) && $method === 'PUT') {
         $status   = $b['approvalStatus'] ?? $b['approval_status'];
         $feedback = $b['ambassadorFeedback'] ?? $b['ambassador_feedback'] ?? null;
         $reason   = $b['rejectionReason'] ?? $b['rejection_reason'] ?? null;
+        enforceMaxLength($feedback, 2500, 'Ambassador feedback');
+        enforceMaxLength($reason, 2500, 'Rejection reason');
         $st       = $pdo->prepare("UPDATE `{$prefix}ambassador_clubs` SET
             approval_status=?,ambassador_feedback=?,rejection_reason=?,reviewed_by=?,updated_at=?
             WHERE id=?");
@@ -448,15 +522,35 @@ if (preg_match('#^/clubs/([^/]+)$#', $sub, $m) && $method === 'PUT') {
 // ── Events helpers ────────────────────────────────────────────────────────────
 
 function fmtEvent(array $e): array {
+    $imageCol = eventImageColumn();
+    $summaryCol = eventSummaryColumn();
+    $shortDescription = trim((string)(($summaryCol ? ($e[$summaryCol] ?? null) : null) ?? $e['short_description'] ?? $e['excerpt'] ?? ''));
+    $description = trim((string)($e['description'] ?? ''));
+    if ($shortDescription === '' && $description !== '') {
+        $shortDescription = $description;
+    }
+    if ($description === '' && $shortDescription !== '') {
+        $description = $shortDescription;
+    }
+    if ($shortDescription === '' && !empty($e['title'])) {
+        $shortDescription = (string)$e['title'];
+    }
+    if ($description === '' && !empty($e['title'])) {
+        $description = (string)$e['title'];
+    }
     return [
         'id'          => (int)$e['id'],
         'documentId'  => (string)$e['id'],
         'title'       => $e['title'],
         'slug'        => $e['slug'],
-        'description' => $e['description'] ?? '',
+        'shortDescription' => $shortDescription,
+        'description' => $description,
         'startDate'   => $e['start_date'],
         'endDate'     => $e['end_date'],
+        'start_datetime' => $e['start_date'],
+        'end_datetime' => $e['end_date'],
         'location'    => $e['location'] ?? '',
+        'thumbnailUrl' => $e[$imageCol] ?? '',
         'meetingLink' => $e['meeting_link'] ?? '',
         'category'    => fetchCategory((int)$e['category_id']),
         'tags'        => fetchTags('ambassador_event_tags', 'event_id', (int)$e['id']),
@@ -464,6 +558,68 @@ function fmtEvent(array $e): array {
         'createdAt'   => $e['created_at'],
         'updatedAt'   => $e['updated_at'],
     ];
+}
+
+function payloadLooksLikeEvent(array $payload): bool {
+    $eventKeys = [
+        'startDate', 'start_date', 'start_datetime',
+        'endDate', 'end_date', 'end_datetime',
+        'meetingLink', 'meeting_link',
+        'thumbnailUrl', 'thumbnail_url',
+    ];
+
+    foreach ($eventKeys as $key) {
+        if (array_key_exists($key, $payload) && $payload[$key] !== null && $payload[$key] !== '') {
+            return true;
+        }
+    }
+
+    $hasDescriptionOnly = !empty($payload['description']) && empty($payload['content']);
+    if ($hasDescriptionOnly && (!empty($payload['shortDescription']) || !empty($payload['short_description']) || !empty($payload['location']))) {
+        return true;
+    }
+
+    return false;
+}
+
+function createEventFromPayload(array $b, array $claims): array {
+    global $pdo, $prefix;
+
+    $slug = uniqueSlug($b['title'] ?? 'event', 'ambassador_events');
+    $now  = date('Y-m-d H:i:s');
+    enforceMaxLength(($b['description'] ?? null), 2500, 'Event description');
+
+    $imageCol = eventImageColumn();
+    $summaryCol = eventSummaryColumn();
+    $summaryValue = $b['shortDescription'] ?? $b['short_description'] ?? '';
+
+    $st = $pdo->prepare("INSERT INTO `{$prefix}ambassador_events`
+        (document_id,title,slug,description,start_date,end_date,location,{$imageCol},meeting_link,
+         category_id,club_id,author_id,state,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?)");
+    $st->execute([uuid(), $b['title']??'', $slug, $b['description']??'',
+        $b['startDate']??$b['start_date']??$b['start_datetime']??$now, $b['endDate']??$b['end_date']??$b['end_datetime']??$now,
+        $b['location']??'', $b['thumbnailUrl']??$b['thumbnail_url']??null, $b['meetingLink']??$b['meeting_link']??null,
+        $b['category']['id']??$b['category_id']??null, $b['club']['id']??$b['club_id']??null,
+        (int)$claims['sub'], $now, $now]);
+
+    $newId = (int)$pdo->lastInsertId();
+    if ($summaryCol !== '') {
+        $upd = $pdo->prepare("UPDATE `{$prefix}ambassador_events` SET {$summaryCol}=? WHERE id=?");
+        $upd->execute([$summaryValue, $newId]);
+    }
+
+    if (!empty($b['tags'])) {
+        $ins = $pdo->prepare("INSERT IGNORE INTO `{$prefix}ambassador_event_tags` (event_id,tag_id) VALUES (?,?)");
+        foreach ($b['tags'] as $tag) {
+            $tid = is_array($tag) ? (int)($tag['id']??0) : (int)$tag;
+            if ($tid) $ins->execute([$newId, $tid]);
+        }
+    }
+
+    $st2 = $pdo->prepare("SELECT * FROM `{$prefix}ambassador_events` WHERE id=?");
+    $st2->execute([$newId]);
+    return fmtEvent($st2->fetch());
 }
 
 // ── GET /events ───────────────────────────────────────────────────────────────
@@ -482,31 +638,8 @@ if ($sub === '/events' && $method === 'GET') {
 if ($sub === '/events' && $method === 'POST') {
     $claims = requireAuth();
     requireRole($claims, ['Ambassador','Professor','Teacher','Admin','SuperAdmin']);
-    $b    = body()['data'] ?? body();
-    $slug = uniqueSlug($b['title'] ?? 'event', 'ambassador_events');
-    $now  = date('Y-m-d H:i:s');
-
-    $st = $pdo->prepare("INSERT INTO `{$prefix}ambassador_events`
-        (document_id,title,slug,description,start_date,end_date,location,meeting_link,
-         category_id,club_id,author_id,state,created_at,updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,1,?,?)");
-    $st->execute([uuid(), $b['title']??'', $slug, $b['description']??'',
-        $b['startDate']??$b['start_date']??$now, $b['endDate']??$b['end_date']??$now,
-        $b['location']??'', $b['meetingLink']??$b['meeting_link']??null,
-        $b['category']['id']??$b['category_id']??null, $b['club']['id']??$b['club_id']??null,
-        (int)$claims['sub'], $now, $now]);
-
-    $newId = (int)$pdo->lastInsertId();
-    if (!empty($b['tags'])) {
-        $ins = $pdo->prepare("INSERT IGNORE INTO `{$prefix}ambassador_event_tags` (event_id,tag_id) VALUES (?,?)");
-        foreach ($b['tags'] as $tag) {
-            $tid = is_array($tag) ? (int)($tag['id']??0) : (int)$tag;
-            if ($tid) $ins->execute([$newId, $tid]);
-        }
-    }
-    $st2 = $pdo->prepare("SELECT * FROM `{$prefix}ambassador_events` WHERE id=?");
-    $st2->execute([$newId]);
-    ok(fmtEvent($st2->fetch()));
+    $b = body()['data'] ?? body();
+    ok(createEventFromPayload($b, $claims));
 }
 
 // ── GET /events/:id ───────────────────────────────────────────────────────────
@@ -525,6 +658,7 @@ if (preg_match('#^/events/([^/]+)$#', $sub, $m) && $method === 'GET') {
 if (preg_match('#^/events/([^/]+)$#', $sub, $m) && $method === 'PUT') {
     $claims = requireAuth();
     $id = (int)$m[1]; $b = body()['data'] ?? body(); $now = date('Y-m-d H:i:s');
+    $imageCol = eventImageColumn();
 
     if (array_key_exists('attendees', $b)) {
         $uid = (int)$claims['sub']; $joining = !empty($b['attendees']);
@@ -539,10 +673,17 @@ if (preg_match('#^/events/([^/]+)$#', $sub, $m) && $method === 'PUT') {
         }
     } else {
         requireRole($claims, ['Ambassador','Professor','Teacher','Admin','SuperAdmin']);
-        $pdo->prepare("UPDATE `{$prefix}ambassador_events` SET title=?,description=?,start_date=?,end_date=?,location=?,meeting_link=?,category_id=?,updated_at=? WHERE id=?")
-            ->execute([$b['title']??'',$b['description']??'',$b['startDate']??$b['start_date']??null,
-                       $b['endDate']??$b['end_date']??null,$b['location']??'',$b['meetingLink']??null,
+        enforceMaxLength(($b['description'] ?? null), 2500, 'Event description');
+        $summaryCol = eventSummaryColumn();
+        $summaryValue = $b['shortDescription'] ?? $b['short_description'] ?? '';
+        $pdo->prepare("UPDATE `{$prefix}ambassador_events` SET title=?,description=?,start_date=?,end_date=?,location=?,{$imageCol}=?,meeting_link=?,category_id=?,updated_at=? WHERE id=?")
+            ->execute([$b['title']??'', $b['description']??'', $b['startDate']??$b['start_date']??null,
+                       $b['endDate']??$b['end_date']??null, $b['location']??'', $b['thumbnailUrl']??$b['thumbnail_url']??null, $b['meetingLink']??null,
                        $b['category']['id']??$b['category_id']??null,$now,$id]);
+        if ($summaryCol !== '') {
+            $upd = $pdo->prepare("UPDATE `{$prefix}ambassador_events` SET {$summaryCol}=? WHERE id=?");
+            $upd->execute([$summaryValue, $id]);
+        }
     }
 
     $st = $pdo->prepare("SELECT * FROM `{$prefix}ambassador_events` WHERE id=?"); $st->execute([$id]);
@@ -586,8 +727,12 @@ if ($sub === '/news-items' && $method === 'POST') {
     $claims = requireAuth();
     requireRole($claims, ['Ambassador','Professor','Teacher','Admin','SuperAdmin']);
     $b    = body()['data'] ?? body();
+    if (payloadLooksLikeEvent($b)) {
+        ok(createEventFromPayload($b, $claims));
+    }
     $slug = uniqueSlug($b['title'] ?? 'news', 'ambassador_news');
     $now  = date('Y-m-d H:i:s');
+    enforceMaxLength(($b['content'] ?? null), 2500, 'News content');
 
     $st = $pdo->prepare("INSERT INTO `{$prefix}ambassador_news`
         (document_id,title,slug,excerpt,content,featured_image,category_id,club_id,author_id,state,created_at,updated_at)
@@ -626,6 +771,7 @@ if (preg_match('#^/news-items/([^/]+)$#', $sub, $m) && $method === 'PUT') {
     $claims = requireAuth();
     requireRole($claims, ['Ambassador','Professor','Teacher','Admin','SuperAdmin']);
     $id = (int)$m[1]; $b = body()['data'] ?? body(); $now = date('Y-m-d H:i:s');
+    enforceMaxLength(($b['content'] ?? null), 2500, 'News content');
     $pdo->prepare("UPDATE `{$prefix}ambassador_news` SET title=?,excerpt=?,content=?,featured_image=?,category_id=?,updated_at=? WHERE id=?")
         ->execute([$b['title']??'',$b['excerpt']??'',$b['content']??'',
                    $b['featuredImage']['url']??$b['featured_image']??null,
@@ -647,8 +793,19 @@ if ($sub === '/news-categories' && $method === 'GET') {
 // ── GET /news-tags ────────────────────────────────────────────────────────────
 
 if ($sub === '/news-tags' && $method === 'GET') {
-    $st = $pdo->query("SELECT id, title FROM `{$prefix}tags` WHERE published=1 ORDER BY title");
-    ok(array_map(fn($r) => ['id'=>(int)$r['id'],'documentId'=>(string)$r['id'],'name'=>$r['title']], $st->fetchAll()));
+    $st = $pdo->query("SELECT t.id, t.title, t.parent_id, t.path, p.title AS parent_title
+        FROM `{$prefix}tags` t
+        LEFT JOIN `{$prefix}tags` p ON p.id = t.parent_id
+        WHERE t.published=1
+        ORDER BY t.title");
+    ok(array_map(fn($r) => [
+        'id' => (int)$r['id'],
+        'documentId' => (string)$r['id'],
+        'name' => $r['title'],
+        'parentId' => isset($r['parent_id']) ? (string)$r['parent_id'] : null,
+        'parentTitle' => $r['parent_title'] ?? null,
+        'path' => $r['path'] ?? null,
+    ], $st->fetchAll()));
 }
 
 // ── POST /upload ──────────────────────────────────────────────────────────────

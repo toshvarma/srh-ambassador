@@ -68,8 +68,10 @@
 }
 
 .content {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--spacing-lg);
+  min-height: calc(100vh - 180px);
 }
 
 .publishForm {
@@ -227,6 +229,8 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-md);
+  margin-top: auto;
+  padding-top: var(--spacing-md);
 }
 
 .pagination button {

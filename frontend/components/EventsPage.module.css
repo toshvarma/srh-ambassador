@@ -146,7 +146,7 @@
 
 .eventBody {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.5rem;
   padding: var(--spacing-md);
 }
 
@@ -170,6 +170,29 @@
   margin: 0;
   color: var(--color-gray-700);
   font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 3.7em;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tagChip {
+  border-radius: var(--radius-full);
+  border: 1px solid #f8cfa8;
+  background: #fff9f2;
+  color: #9b4e0f;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 0.2rem 0.55rem;
 }
 
 .eventAuthor,
@@ -186,8 +209,7 @@
   flex-wrap: wrap;
 }
 
-.readMoreButton,
-.signupButton {
+.readMoreButton {
   border-radius: var(--radius-full);
   padding: 0.45rem 0.95rem;
   font-size: var(--font-size-sm);
@@ -198,15 +220,6 @@
 .readMoreButton {
   background: var(--srh-primary);
   color: var(--color-white);
-}
-
-.signupButton {
-  background: var(--srh-accent);
-  color: var(--color-white);
-}
-
-.signupButton:disabled {
-  background: var(--color-gray-400);
 }
 
 .pagination {

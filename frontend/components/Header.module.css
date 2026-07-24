@@ -69,6 +69,15 @@
   width: 100%;
 }
 
+.navLink[aria-current="page"]::after {
+  width: 100%;
+}
+
+.navLink[aria-current="page"] {
+  color: #ffe8d1;
+  opacity: 1;
+}
+
 .navLink:hover {
   color: #ffe8d1;
   opacity: 1;

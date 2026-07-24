@@ -7,7 +7,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth, useCapabilities } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { t } from "@/lib/i18n";
-import { fetchStrapiCollection, strapiMediaUrl, updateStrapiEntry, type StrapiEntry } from "@/lib/strapi";
+import { resolveFirstMediaUrl } from "@/lib/media";
+import { fetchStrapiCollection, updateStrapiEntry, type StrapiEntry } from "@/lib/strapi";
 import styles from "./ManageClubReviewPage.module.css";
 
 type Reviewer = {
@@ -30,10 +31,13 @@ type ClubReview = {
   shortDescription?: string;
   detailedDescription?: string;
   contact_email?: string;
+  contactEmail?: string;
   approvalStatus?: "pending" | "approved" | "rejected";
   ambassadorFeedback?: string;
   rejectionReason?: string;
   coverImageUrl?: string;
+  coverImage?: { url?: string } | null;
+  cover_image?: unknown;
   submittedBy?: ClubMember | null;
   reviewedBy?: Reviewer | null;
   members?: ClubMember[];
@@ -178,6 +182,7 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
   const reviewer = club.reviewedBy
     ? `${club.reviewedBy.firstName ?? ""} ${club.reviewedBy.lastName ?? ""}`.trim()
     : null;
+  const coverImageSrc = resolveFirstMediaUrl(club.coverImageUrl, club.coverImage, club.cover_image);
   const statusInfo = STATUS_LABELS[club.approvalStatus ?? "pending"] ?? STATUS_LABELS.pending;
   const en = locale === "en";
 
@@ -242,8 +247,8 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
         </span>
       </header>
 
-      {club.coverImageUrl ? (
-        <img src={strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl} alt={club.title ?? "Club"} className={styles.cover} />
+      {coverImageSrc ? (
+        <img src={coverImageSrc} alt={club.title ?? "Club"} className={styles.cover} />
       ) : null}
 
       {/* ── Club details ── */}
@@ -253,7 +258,7 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
         <p>{club.detailedDescription}</p>
         <dl className={styles.meta}>
           <dt>{en ? "Contact" : "Kontakt"}</dt>
-          <dd>{club.contact_email ?? "-"}</dd>
+          <dd>{club.contact_email ?? club.contactEmail ?? club.submittedBy?.email ?? "-"}</dd>
           <dt>{en ? "Submitted by" : "Eingereicht von"}</dt>
           <dd>
             {submitter || "-"}
@@ -328,13 +333,15 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
             className={styles.textarea}
             rows={3}
             value={rejectionReason}
-            onChange={(event) => setRejectionReason(event.target.value)}
+            onChange={(event) => setRejectionReason(event.target.value.slice(0, 2500))}
+            maxLength={2500}
             placeholder={
               en
                 ? "Explain why this club cannot be approved in its current form…"
                 : "Erklären Sie, warum dieser Club in der aktuellen Form nicht genehmigt werden kann…"
             }
           />
+          <p className={styles.counter}>{rejectionReason.length}/2500</p>
 
           <label className={styles.fieldLabel}>
             {en ? "Feedback / suggested changes" : "Feedback / Änderungsvorschläge"}
@@ -344,13 +351,15 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
             className={styles.textarea}
             rows={3}
             value={feedback}
-            onChange={(event) => setFeedback(event.target.value)}
+            onChange={(event) => setFeedback(event.target.value.slice(0, 2500))}
+            maxLength={2500}
             placeholder={
               en
                 ? "Any constructive comments or suggestions for improvement…"
                 : "Konstruktive Kommentare oder Verbesserungsvorschläge…"
             }
           />
+          <p className={styles.counter}>{feedback.length}/2500</p>
 
           <div className={styles.actions}>
             <button type="button" className={styles.successAction} disabled={saving} onClick={() => void updateStatus("approved")}>

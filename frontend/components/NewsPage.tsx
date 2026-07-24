@@ -7,8 +7,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { t } from "@/lib/i18n";
+import { resolveFirstMediaUrl } from "@/lib/media";
 import type { UserRole } from "@/lib/roles";
-import { fetchStrapiCollection, strapiMediaUrl, type StrapiEntry } from "@/lib/strapi";
+import { fetchStrapiCollection, type StrapiEntry } from "@/lib/strapi";
 import styles from "./NewsPage.module.css";
 
 type NewsTag = {
@@ -23,6 +24,7 @@ type NewsArticle = {
   excerpt?: string;
   content?: string;
   featuredImageUrl?: string;
+  featured_image?: string;
   courseLabel?: string;
   publishedAt?: string;
   status?: string;
@@ -192,9 +194,17 @@ export default function NewsPage() {
                     <span key={tagLabel} className={styles.tagBadge}>{tagLabel}</span>
                   ))}
                 </div>
-                {featuredArticle.featuredImage?.url || featuredArticle.featuredImageUrl ? (
+                {resolveFirstMediaUrl(
+                  featuredArticle.featuredImage,
+                  featuredArticle.featuredImageUrl,
+                  featuredArticle.featured_image
+                ) ? (
                   <img
-                    src={strapiMediaUrl(featuredArticle.featuredImage?.url) ?? featuredArticle.featuredImageUrl ?? ""}
+                    src={resolveFirstMediaUrl(
+                      featuredArticle.featuredImage,
+                      featuredArticle.featuredImageUrl,
+                      featuredArticle.featured_image
+                    ) ?? ""}
                     alt={featuredArticle.title ?? ""}
                     className={styles.featuredImage}
                   />
@@ -221,9 +231,17 @@ export default function NewsPage() {
             <div className={styles.newsGrid}>
               {regularNews.map((article) => (
                 <article key={article.documentId ?? article.id} className={styles.newsCard}>
-                  {article.featuredImage?.url || article.featuredImageUrl ? (
+                  {resolveFirstMediaUrl(
+                    article.featuredImage,
+                    article.featuredImageUrl,
+                    article.featured_image
+                  ) ? (
                     <img
-                      src={strapiMediaUrl(article.featuredImage?.url) ?? article.featuredImageUrl ?? ""}
+                      src={resolveFirstMediaUrl(
+                        article.featuredImage,
+                        article.featuredImageUrl,
+                        article.featured_image
+                      ) ?? ""}
                       alt={article.title ?? ""}
                       className={styles.cardImage}
                     />

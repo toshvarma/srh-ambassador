@@ -176,7 +176,23 @@ export function strapiMediaUrl(url?: string | null): string | undefined {
     return undefined;
   }
 
-  if (url.startsWith("http://") || url.startsWith("https://")) {
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("blob:") ||
+    url.startsWith("data:")
+  ) {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      try {
+        const remote = new URL(url);
+        const localBase = new URL(STRAPI_URL);
+        if (remote.host !== localBase.host && remote.pathname.startsWith("/images/")) {
+          return `${localBase.origin}${remote.pathname}${remote.search}`;
+        }
+      } catch {
+        return url;
+      }
+    }
     return url;
   }
 

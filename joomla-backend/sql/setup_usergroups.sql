@@ -11,7 +11,7 @@
 -- Default Joomla install: Registered = id 2
 -- We insert with parent_id = 2 (Registered). Adjust if your setup differs.
 
-INSERT INTO `jos_usergroups` (`parent_id`, `lft`, `rgt`, `title`) VALUES
+INSERT INTO `srhub_usergroups` (`parent_id`, `lft`, `rgt`, `title`) VALUES
   (2, 0, 0, 'Student'),
   (2, 0, 0, 'ExchangeStudent'),
   (2, 0, 0, 'Professor'),

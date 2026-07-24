@@ -27,6 +27,22 @@
   color: var(--color-gray-600);
 }
 
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.tagChip {
+  border-radius: var(--radius-full);
+  border: 1px solid #f8cfa8;
+  background: #fff9f2;
+  color: #9b4e0f;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 0.2rem 0.55rem;
+}
+
 .body {
   display: grid;
   gap: var(--spacing-xs);

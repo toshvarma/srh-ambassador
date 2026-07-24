@@ -7,7 +7,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { t } from "@/lib/i18n";
-import { fetchStrapiCollection, strapiMediaUrl, updateStrapiEntry, type StrapiEntry } from "@/lib/strapi";
+import { resolveFirstMediaUrl, resolveMediaUrls } from "@/lib/media";
+import { fetchStrapiCollection, updateStrapiEntry, type StrapiEntry } from "@/lib/strapi";
 import styles from "./ClubDetailPage.module.css";
 
 type ClubMember = {
@@ -25,17 +26,52 @@ type ClubDetail = {
   description?: string;
   detailedDescription?: string;
   coverImageUrl?: string;
+  coverImage?: { url?: string } | null;
+  cover_image?: unknown;
   contact_email?: string;
+  contactEmail?: string;
   submittedBy?: ClubMember | null;
   members?: ClubMember[];
-  gallery?: Array<{ url?: string }>;
+  gallery?: unknown;
 };
+
+const DUMMY_MEMBER_NAMES = [
+  "Mia Chen",
+  "Noah Patel",
+  "Elena Schmidt",
+  "Lucas Meyer",
+  "Ava Johnson",
+  "Ethan Fischer",
+  "Zoe Wagner",
+  "Liam Becker",
+  "Nora Hoffmann",
+  "Jonas Weber",
+  "Sofia Klein",
+  "David Braun",
+];
+
+function hashString(value: string) {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function buildClubDummyMembers(clubKey: string, count = 6) {
+  if (DUMMY_MEMBER_NAMES.length === 0) return [];
+  const start = hashString(clubKey) % DUMMY_MEMBER_NAMES.length;
+  const names: string[] = [];
+  for (let step = 0; step < DUMMY_MEMBER_NAMES.length && names.length < count; step += 1) {
+    names.push(DUMMY_MEMBER_NAMES[(start + step) % DUMMY_MEMBER_NAMES.length]);
+  }
+  return names;
+}
 
 export default function ClubDetailPage({ slug }: { slug: string }) {
   const { locale } = useLocale();
   const { auth } = useAuth();
   const [club, setClub] = useState<StrapiEntry<ClubDetail> | null>(null);
-  const [fallbackMembers, setFallbackMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
@@ -78,31 +114,22 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
     void loadClub();
   }, [loadClub]);
 
-  useEffect(() => {
-    if (!auth?.token) return;
-    void fetchStrapiCollection<{ firstName?: string; lastName?: string }>("/users", {
-      token: auth.token,
-      query: {
-        "pagination[limit]": 6,
-        "sort[0]": "firstName:asc",
-      },
-    }).then((users) => {
-      const names = users
-        .map((user) => `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim())
-        .filter((name): name is string => Boolean(name));
-      setFallbackMembers(names);
-    }).catch(() => undefined);
-  }, [auth?.token]);
-
   if (loading) return <div className={styles.loading}>{t(locale, "loading")}</div>;
   if (error) return <div className={styles.error}>{error}</div>;
   if (!club) return <div className={styles.error}>{locale === "en" ? "Club not found." : "Club nicht gefunden."}</div>;
 
   const leaderName = `${club.submittedBy?.firstName ?? ""} ${club.submittedBy?.lastName ?? ""}`.trim();
+  const clubKey = club.documentId ?? club.slug ?? club.title ?? "club";
+  const clubDummyMembers = buildClubDummyMembers(clubKey);
+  const coverImageSrc = resolveFirstMediaUrl(club.coverImageUrl, club.coverImage, club.cover_image);
+  const galleryImageUrls = resolveMediaUrls(club.gallery);
+  if (coverImageSrc && !galleryImageUrls.includes(coverImageSrc)) {
+    galleryImageUrls.unshift(coverImageSrc);
+  }
   const memberNames = (club.members ?? [])
     .map((member) => `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim())
     .filter((name): name is string => Boolean(name));
-  const visibleMembers = memberNames.length > 0 ? memberNames : fallbackMembers;
+  const visibleMembers = Array.from(new Set([...memberNames, ...clubDummyMembers]));
   const existingMemberIds = (club.members ?? [])
     .map((member) => member.documentId)
     .filter((id): id is string => Boolean(id));
@@ -136,8 +163,8 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
         {locale === "en" ? "← Back to Clubs" : "← Zurück zu Clubs"}
       </Link>
 
-      {club.coverImageUrl ? (
-        <img src={strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl} alt={club.title ?? "Club"} className={styles.heroImage} />
+      {coverImageSrc ? (
+        <img src={coverImageSrc} alt={club.title ?? "Club"} className={styles.heroImage} />
       ) : null}
 
       <h1>{club.title}</h1>
@@ -152,10 +179,10 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
 
           <section className={styles.section}>
             <h2>{locale === "en" ? "Gallery" : "Galerie"}</h2>
-            {club.gallery && club.gallery.length > 0 ? (
+            {galleryImageUrls.length > 0 ? (
               <div className={styles.gallery}>
-                {club.gallery.map((image, index) => (
-                  <img key={`${image.url ?? "gallery"}-${index}`} src={strapiMediaUrl(image.url) ?? ""} alt={`${club.title ?? "Club"} ${index + 1}`} className={styles.galleryImage} />
+                {galleryImageUrls.map((imageUrl, index) => (
+                  <img key={`${imageUrl}-${index}`} src={imageUrl} alt={`${club.title ?? "Club"} ${index + 1}`} className={styles.galleryImage} />
                 ))}
               </div>
             ) : (
@@ -168,7 +195,7 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
           <section className={styles.section}>
             <h2>{locale === "en" ? "Club leader + contact" : "Club-Leitung + Kontakt"}</h2>
             <p>{leaderName || (locale === "en" ? "Not specified" : "Nicht angegeben")}</p>
-            <p>{club.contact_email || club.submittedBy?.email || "-"}</p>
+            <p>{club.contact_email || club.contactEmail || club.submittedBy?.email || "-"}</p>
             {(auth?.appRole === "Student" || auth?.appRole === "ExchangeStudent") ? (
               <button
                 type="button"

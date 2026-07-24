@@ -8,7 +8,8 @@ import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { t } from "@/lib/i18n";
-import { fetchStrapiCollection, strapiMediaUrl, type StrapiEntry } from "@/lib/strapi";
+import { resolveFirstMediaUrl } from "@/lib/media";
+import { fetchStrapiCollection, type StrapiEntry } from "@/lib/strapi";
 import styles from "./NewsDetailPage.module.css";
 
 type NewsTag = {
@@ -22,6 +23,7 @@ type NewsDetail = {
   excerpt?: string;
   content?: string;
   featuredImageUrl?: string;
+  featured_image?: string;
   publishedAt?: string;
   featuredImage?: { url?: string } | null;
   author?: { firstName?: string; lastName?: string } | null;
@@ -81,15 +83,16 @@ export default function NewsDetailPage({ slug }: { slug: string }) {
   if (!article) return <div className={styles.error}>{locale === "en" ? "Article not found." : "Artikel nicht gefunden."}</div>;
 
   const tags = (article.tags ?? []).map((tag) => tag.name).filter((name): name is string => Boolean(name));
+  const heroImageSrc = resolveFirstMediaUrl(article.featuredImage, article.featuredImageUrl, article.featured_image);
 
   return (
     <article className={styles.detailPage}>
       <Link href="/news" className={styles.backLink}>
         {locale === "en" ? "← Back to News" : "← Zurück zu Nachrichten"}
       </Link>
-      {article.featuredImage?.url || article.featuredImageUrl ? (
+      {heroImageSrc ? (
         <img
-          src={strapiMediaUrl(article.featuredImage?.url) ?? article.featuredImageUrl ?? ""}
+          src={heroImageSrc}
           alt={article.title ?? "News"}
           className={styles.heroImage}
         />
