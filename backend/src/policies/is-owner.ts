@@ -10,7 +10,7 @@
         return false;
     }
 
-    const article = await strapi.documents('api::news-article.news-article').findOne({
+    const article = await strapi.documents('api::news-item.news-item').findOne({
         documentId,
         populate: {
             author: {
@@ -21,4 +21,3 @@
 
     return article?.author?.documentId === currentUser.documentId;
 };
-

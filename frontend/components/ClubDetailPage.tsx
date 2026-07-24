@@ -25,17 +25,27 @@ type ClubDetail = {
   description?: string;
   detailedDescription?: string;
   coverImageUrl?: string;
+  CoverImageMedia?: { url?: string } | null;
   contact_email?: string;
   submittedBy?: ClubMember | null;
   members?: ClubMember[];
   gallery?: Array<{ url?: string }>;
 };
 
+const DUMMY_MEMBERS_BY_CLUB: Record<string, string[]> = {
+  "coding": ["Lena Fischer", "Amir Hassan", "Noah Schneider", "Mia Kruger"],
+  "robotics": ["Jonas Meyer", "Aylin Demir", "Paul Wagner", "Nina Sommer"],
+  "photography": ["Sofia Becker", "Lukas Hoffmann", "Emma Roth", "Ali Yilmaz"],
+  "music": ["Hannah Bauer", "David Klein", "Leonie Vogel", "Milan Petrovic"],
+  "sports": ["Felix Braun", "Sarah Keller", "Tom Richter", "Zoe Lehmann"],
+};
+
+const DEFAULT_DUMMY_MEMBERS = ["Alex Morgan", "Jamie Patel", "Sam Rivera", "Taylor Kim"];
+
 export default function ClubDetailPage({ slug }: { slug: string }) {
   const { locale } = useLocale();
   const { auth } = useAuth();
   const [club, setClub] = useState<StrapiEntry<ClubDetail> | null>(null);
-  const [fallbackMembers, setFallbackMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
@@ -52,6 +62,7 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
           "populate[0]": "submittedBy",
           "populate[1]": "members",
           "populate[2]": "gallery",
+          "populate[3]": "CoverImageMedia",
         },
       });
       if (!data[0]) {
@@ -63,6 +74,7 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
             "populate[0]": "submittedBy",
             "populate[1]": "members",
             "populate[2]": "gallery",
+            "populate[3]": "CoverImageMedia",
           },
         });
       }
@@ -78,22 +90,6 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
     void loadClub();
   }, [loadClub]);
 
-  useEffect(() => {
-    if (!auth?.token) return;
-    void fetchStrapiCollection<{ firstName?: string; lastName?: string }>("/users", {
-      token: auth.token,
-      query: {
-        "pagination[limit]": 6,
-        "sort[0]": "firstName:asc",
-      },
-    }).then((users) => {
-      const names = users
-        .map((user) => `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim())
-        .filter((name): name is string => Boolean(name));
-      setFallbackMembers(names);
-    }).catch(() => undefined);
-  }, [auth?.token]);
-
   if (loading) return <div className={styles.loading}>{t(locale, "loading")}</div>;
   if (error) return <div className={styles.error}>{error}</div>;
   if (!club) return <div className={styles.error}>{locale === "en" ? "Club not found." : "Club nicht gefunden."}</div>;
@@ -102,7 +98,11 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
   const memberNames = (club.members ?? [])
     .map((member) => `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim())
     .filter((name): name is string => Boolean(name));
-  const visibleMembers = memberNames.length > 0 ? memberNames : fallbackMembers;
+  const normalizedClubKey = `${club.slug ?? ""} ${club.title ?? ""}`.toLowerCase();
+  const matchedDummyMembers =
+    Object.entries(DUMMY_MEMBERS_BY_CLUB).find(([key]) => normalizedClubKey.includes(key))?.[1] ??
+    DEFAULT_DUMMY_MEMBERS;
+  const visibleMembers = memberNames.length > 0 ? memberNames : matchedDummyMembers;
   const existingMemberIds = (club.members ?? [])
     .map((member) => member.documentId)
     .filter((id): id is string => Boolean(id));
@@ -136,8 +136,12 @@ export default function ClubDetailPage({ slug }: { slug: string }) {
         {locale === "en" ? "← Back to Clubs" : "← Zurück zu Clubs"}
       </Link>
 
-      {club.coverImageUrl ? (
-        <img src={strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl} alt={club.title ?? "Club"} className={styles.heroImage} />
+      {club.CoverImageMedia?.url || club.coverImageUrl ? (
+        <img
+          src={strapiMediaUrl(club.CoverImageMedia?.url) ?? strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl}
+          alt={club.title ?? "Club"}
+          className={styles.heroImage}
+        />
       ) : null}
 
       <h1>{club.title}</h1>

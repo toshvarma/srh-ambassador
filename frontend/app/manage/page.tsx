@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useAuth, useCapabilities } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
@@ -14,6 +14,62 @@ import {
   type StrapiEntry,
 } from "@/lib/strapi";
 import styles from "./manage.module.css";
+
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://localhost:1337";
+const ACCEPTED_IMAGE_EXTS = ".png,.jpg,.jpeg,.webp";
+
+type CategoryOptionKey = "none" | "social" | "technology";
+
+const COURSE_OPTIONS = [
+  "All Courses",
+  "B.Sc Web Development",
+  "B.A UX/UI Design",
+] as const;
+type CourseOption = (typeof COURSE_OPTIONS)[number];
+
+function injectMarkdown(
+  textarea: HTMLTextAreaElement | null,
+  prefix: string,
+  suffix = "",
+  fallback = "text"
+) {
+  if (!textarea) return null;
+  const start = textarea.selectionStart ?? 0;
+  const end = textarea.selectionEnd ?? start;
+  const value = textarea.value;
+  const selected = value.slice(start, end) || fallback;
+  const inserted = `${prefix}${selected}${suffix}`;
+  const nextValue = `${value.slice(0, start)}${inserted}${value.slice(end)}`;
+  const caretStart = start + prefix.length;
+  const caretEnd = caretStart + selected.length;
+  return { nextValue, caretStart, caretEnd };
+}
+
+async function uploadImageToStrapi(
+  file: File,
+  token: string
+): Promise<{ id?: number; url: string }> {
+  const body = new FormData();
+  body.append("files", file, file.name);
+  const response = await fetch(`${STRAPI_URL}/api/upload`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body,
+  });
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => ({}))) as { error?: { message?: string } };
+    throw new Error(errorPayload.error?.message ?? `Upload failed (${response.status})`);
+  }
+  const payload = (await response.json()) as Array<{ id?: number; url?: string }>;
+  const uploaded = payload[0];
+  if (!uploaded?.url) {
+    throw new Error("No image URL returned from upload.");
+  }
+  return {
+    id: uploaded.id,
+    url: uploaded.url.startsWith("http") ? uploaded.url : `${STRAPI_URL}${uploaded.url}`,
+  };
+}
 
 type NewsCategory = { documentId?: string; name?: string };
 type NewsTag = { documentId?: string; name?: string };
@@ -50,24 +106,6 @@ function readMeta(entry: unknown): Omit<SavedMeta, "savedAt"> {
   };
 }
 
-function injectMarkdown(
-  textarea: HTMLTextAreaElement | null,
-  prefix: string,
-  suffix = "",
-  fallback = "text"
-) {
-  if (!textarea) return null;
-  const start = textarea.selectionStart ?? 0;
-  const end = textarea.selectionEnd ?? start;
-  const value = textarea.value;
-  const selected = value.slice(start, end) || fallback;
-  const inserted = `${prefix}${selected}${suffix}`;
-  const nextValue = `${value.slice(0, start)}${inserted}${value.slice(end)}`;
-  const caretStart = start + prefix.length;
-  const caretEnd = caretStart + selected.length;
-  return { nextValue, caretStart, caretEnd };
-}
-
 export default function ManagePage() {
   const { locale } = useLocale();
   const { auth } = useAuth();
@@ -85,10 +123,11 @@ export default function ManagePage() {
     excerpt: "",
     content: "",
     featuredImageUrl: "",
+    featuredImageId: null as number | null,
     visibility: "all" as "all" | "student" | "professor",
-    category: "",
+    category: "none" as CategoryOptionKey,
     tagIds: [] as string[],
-    courseLabel: "",
+    courseLabel: "All Courses" as CourseOption,
   });
   const [eventInput, setEventInput] = useState({
     title: "",
@@ -98,7 +137,8 @@ export default function ManagePage() {
     start_datetime: "",
     end_datetime: "",
     thumbnailUrl: "",
-    category: "",
+    thumbnailId: null as number | null,
+    category: "none" as CategoryOptionKey,
     tagIds: [] as string[],
   });
 
@@ -108,9 +148,10 @@ export default function ManagePage() {
   const [eventMeta, setEventMeta] = useState<SavedMeta>({});
   const [savingNews, setSavingNews] = useState(false);
   const [savingEvent, setSavingEvent] = useState(false);
-
-  const newsEditorRef = useRef<HTMLTextAreaElement | null>(null);
-  const eventEditorRef = useRef<HTMLTextAreaElement | null>(null);
+  const [uploadingNewsImage, setUploadingNewsImage] = useState(false);
+  const [uploadingEventImage, setUploadingEventImage] = useState(false);
+  const [newsEditorRef, setNewsEditorRef] = useState<HTMLTextAreaElement | null>(null);
+  const [eventEditorRef, setEventEditorRef] = useState<HTMLTextAreaElement | null>(null);
 
   const canAccessManage = useMemo(
     () =>
@@ -206,8 +247,74 @@ export default function ManagePage() {
     void loadManageData();
   }, [loadManageData]);
 
+  const categoryIdsByKey = useMemo(() => {
+    const normalized = categories.reduce<Record<string, string>>((acc, category) => {
+      const id = category.documentId ?? String(category.id ?? "");
+      const name = category.name?.trim().toLowerCase();
+      if (id && name) {
+        acc[name] = id;
+      }
+      return acc;
+    }, {});
+    return {
+      none: null,
+      social: normalized.social ?? normalized.sozial ?? null,
+      technology: normalized.technology ?? normalized.technologie ?? null,
+    } as const;
+  }, [categories]);
+
+  async function handleNewsImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!auth?.token) {
+      setError(locale === "en" ? "Please sign in again before uploading an image." : "Bitte melden Sie sich vor dem Bild-Upload erneut an.");
+      return;
+    }
+
+    try {
+      setUploadingNewsImage(true);
+      setError(null);
+      const uploaded = await uploadImageToStrapi(file, auth.token);
+      setNewsInput((current) => ({
+        ...current,
+        featuredImageUrl: uploaded.url,
+        featuredImageId: uploaded.id ?? null,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t(locale, "unknownError"));
+    } finally {
+      setUploadingNewsImage(false);
+    }
+  }
+
+  async function handleEventImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!auth?.token) {
+      setError(locale === "en" ? "Please sign in again before uploading an image." : "Bitte melden Sie sich vor dem Bild-Upload erneut an.");
+      return;
+    }
+
+    try {
+      setUploadingEventImage(true);
+      setError(null);
+      const uploaded = await uploadImageToStrapi(file, auth.token);
+      setEventInput((current) => ({
+        ...current,
+        thumbnailUrl: uploaded.url,
+        thumbnailId: uploaded.id ?? null,
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t(locale, "unknownError"));
+    } finally {
+      setUploadingEventImage(false);
+    }
+  }
+
   function applyRichText(target: "news" | "event", prefix: string, suffix = "", fallback = "text") {
-    const ref = target === "news" ? newsEditorRef.current : eventEditorRef.current;
+    const ref = target === "news" ? newsEditorRef : eventEditorRef;
     const result = injectMarkdown(ref, prefix, suffix, fallback);
     if (!result) return;
     if (target === "news") {
@@ -223,6 +330,7 @@ export default function ManagePage() {
 
   async function saveNewsDraft() {
     if (!permissions.canManageNews || !auth?.token) return;
+    const selectedCategoryId = categoryIdsByKey[newsInput.category];
     try {
       setSavingNews(true);
       setError(null);
@@ -231,10 +339,11 @@ export default function ManagePage() {
         excerpt: newsInput.excerpt,
         content: newsInput.content,
         featuredImageUrl: newsInput.featuredImageUrl || null,
+        featuredImage: newsInput.featuredImageId ?? null,
         visibility: newsInput.visibility,
-        category: newsInput.category || null,
+        category: selectedCategoryId,
         tags: newsInput.tagIds,
-        courseLabel: newsInput.courseLabel || null,
+        courseLabel: newsInput.courseLabel,
         status: "draft",
         publishedAt: null,
         author: auth.profile?.documentId ?? null,
@@ -255,6 +364,7 @@ export default function ManagePage() {
 
   async function publishNews() {
     if (!permissions.canManageNews || !auth?.token) return;
+    const selectedCategoryId = categoryIdsByKey[newsInput.category];
     try {
       setSavingNews(true);
       setError(null);
@@ -263,10 +373,11 @@ export default function ManagePage() {
         excerpt: newsInput.excerpt,
         content: newsInput.content,
         featuredImageUrl: newsInput.featuredImageUrl || null,
+        featuredImage: newsInput.featuredImageId ?? null,
         visibility: newsInput.visibility,
-        category: newsInput.category || null,
+        category: selectedCategoryId,
         tags: newsInput.tagIds,
-        courseLabel: newsInput.courseLabel || null,
+        courseLabel: newsInput.courseLabel,
         status: "published",
         publishedAt: new Date().toISOString(),
         author: auth.profile?.documentId ?? null,
@@ -287,6 +398,7 @@ export default function ManagePage() {
 
   async function saveEventDraft() {
     if (!permissions.canManageEvents || !auth?.token) return;
+    const selectedCategoryId = categoryIdsByKey[eventInput.category];
     try {
       setSavingEvent(true);
       setError(null);
@@ -300,8 +412,8 @@ export default function ManagePage() {
         location: eventInput.location,
         start_datetime: eventInput.start_datetime || null,
         end_datetime: eventInput.end_datetime || null,
-        thumbnailUrl: eventInput.thumbnailUrl || null,
-        category: eventInput.category || null,
+        thumbnail: eventInput.thumbnailId ?? null,
+        category: selectedCategoryId,
         tags: eventInput.tagIds,
         authorName,
         author: auth.profile?.documentId ?? null,
@@ -323,6 +435,7 @@ export default function ManagePage() {
 
   async function publishEvent() {
     if (!permissions.canManageEvents || !auth?.token) return;
+    const selectedCategoryId = categoryIdsByKey[eventInput.category];
     try {
       setSavingEvent(true);
       setError(null);
@@ -336,8 +449,8 @@ export default function ManagePage() {
         location: eventInput.location,
         start_datetime: eventInput.start_datetime || null,
         end_datetime: eventInput.end_datetime || null,
-        thumbnailUrl: eventInput.thumbnailUrl || null,
-        category: eventInput.category || null,
+        thumbnail: eventInput.thumbnailId ?? null,
+        category: selectedCategoryId,
         tags: eventInput.tagIds,
         authorName,
         author: auth.profile?.documentId ?? null,
@@ -376,8 +489,8 @@ export default function ManagePage() {
         <h1>{t(locale, "manageTitle")}</h1>
         <p>
           {locale === "en"
-            ? "Use menu-based workflows to create rich News and Events, and review Clubs."
-            : "Nutzen Sie menübasierte Abläufe, um umfangreiche Nachrichten und Veranstaltungen zu erstellen und Clubs zu prüfen."}
+            ? "Use menu-based workflows to create News and Events, and review Clubs."
+            : "Nutzen Sie menübasierte Abläufe, um Nachrichten und Veranstaltungen zu erstellen und Clubs zu prüfen."}
         </p>
       </header>
 
@@ -426,7 +539,7 @@ export default function ManagePage() {
       {activeMenu === "news" && permissions.canManageNews ? (
         <section className={styles.panel}>
           <div className={styles.editorColumn}>
-            <h2>{locale === "en" ? "Create News (Rich Text)" : "Nachrichten erstellen (Rich Text)"}</h2>
+            <h2>{locale === "en" ? "Create News" : "Nachrichten erstellen"}</h2>
             <div className={styles.grid2}>
               <input
                 placeholder={t(locale, "title")}
@@ -434,11 +547,16 @@ export default function ManagePage() {
                 onChange={(event) => setNewsInput((current) => ({ ...current, title: event.target.value }))}
                 required
               />
-              <input
-                placeholder={locale === "en" ? "Course label (optional)" : "Kursbezeichnung (optional)"}
+              <select
                 value={newsInput.courseLabel}
-                onChange={(event) => setNewsInput((current) => ({ ...current, courseLabel: event.target.value }))}
-              />
+                onChange={(event) =>
+                  setNewsInput((current) => ({ ...current, courseLabel: event.target.value as CourseOption }))
+                }
+              >
+                {COURSE_OPTIONS.map((courseOption) => (
+                  <option key={courseOption} value={courseOption}>{courseOption}</option>
+                ))}
+              </select>
             </div>
             <input
               placeholder={locale === "en" ? "Short description (preview)" : "Kurzbeschreibung (Vorschau)"}
@@ -446,12 +564,33 @@ export default function ManagePage() {
               onChange={(event) => setNewsInput((current) => ({ ...current, excerpt: event.target.value }))}
               required
             />
-            <input
-              type="url"
-              placeholder={locale === "en" ? "Image URL" : "Bild-URL"}
-              value={newsInput.featuredImageUrl}
-              onChange={(event) => setNewsInput((current) => ({ ...current, featuredImageUrl: event.target.value }))}
-            />
+            <div className={styles.imageUploadBlock}>
+              <label className={styles.label}>{locale === "en" ? "Image Upload" : "Bild-Upload"}</label>
+              <input
+                type="file"
+                accept={ACCEPTED_IMAGE_EXTS}
+                className={styles.fileInput}
+                onChange={(event) => void handleNewsImageUpload(event)}
+              />
+              <div className={styles.imageUploadMeta}>
+                <span>
+                  {uploadingNewsImage
+                    ? locale === "en" ? "Uploading image..." : "Bild wird hochgeladen..."
+                    : newsInput.featuredImageUrl
+                      ? locale === "en" ? "Image uploaded and ready." : "Bild hochgeladen und bereit."
+                      : locale === "en" ? "No image selected." : "Kein Bild ausgewählt."}
+                </span>
+                {newsInput.featuredImageUrl ? (
+                  <button
+                    type="button"
+                    className={styles.clearImageButton}
+                    onClick={() => setNewsInput((current) => ({ ...current, featuredImageUrl: "", featuredImageId: null }))}
+                  >
+                    {locale === "en" ? "Remove" : "Entfernen"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
 
             <div className={styles.grid2}>
               <select
@@ -463,20 +602,17 @@ export default function ManagePage() {
                   }))
                 }
               >
-                <option value="all">{locale === "en" ? "All users" : "Alle Nutzer"}</option>
-                <option value="student">{locale === "en" ? "Students only" : "Nur Studierende"}</option>
-                <option value="professor">{locale === "en" ? "Professors only" : "Nur Professoren"}</option>
+                <option value="all">All Users</option>
+                <option value="student">Students Only</option>
+                <option value="professor">Professors Only</option>
               </select>
               <select
                 value={newsInput.category}
-                onChange={(event) => setNewsInput((current) => ({ ...current, category: event.target.value }))}
+                onChange={(event) => setNewsInput((current) => ({ ...current, category: event.target.value as CategoryOptionKey }))}
               >
-                <option value="">{locale === "en" ? "Category" : "Kategorie"}</option>
-                {categories.map((category) => (
-                  <option key={category.documentId ?? category.id} value={category.documentId ?? String(category.id ?? "")}>
-                    {category.name}
-                  </option>
-                ))}
+                <option value="none">No Category</option>
+                <option value="social">Social</option>
+                <option value="technology">Technology</option>
               </select>
             </div>
 
@@ -516,8 +652,8 @@ export default function ManagePage() {
             </div>
 
             <textarea
-              ref={newsEditorRef}
-              placeholder={locale === "en" ? "Long description / rich text content" : "Lange Beschreibung / Rich-Text-Inhalt"}
+              ref={setNewsEditorRef}
+              placeholder={locale === "en" ? "Long description / article content" : "Lange Beschreibung / Artikelinhalt"}
               value={newsInput.content}
               onChange={(event) => setNewsInput((current) => ({ ...current, content: event.target.value }))}
               rows={12}
@@ -555,7 +691,7 @@ export default function ManagePage() {
       {activeMenu === "events" && permissions.canManageEvents ? (
         <section className={styles.panel}>
           <div className={styles.editorColumn}>
-            <h2>{locale === "en" ? "Create Event (Rich Text)" : "Veranstaltung erstellen (Rich Text)"}</h2>
+            <h2>{locale === "en" ? "Create Event" : "Veranstaltung erstellen"}</h2>
             <div className={styles.grid2}>
               <input
                 placeholder={t(locale, "title")}
@@ -576,12 +712,33 @@ export default function ManagePage() {
                 onChange={(event) => setEventInput((current) => ({ ...current, location: event.target.value }))}
                 required
               />
-              <input
-                type="url"
-                placeholder={locale === "en" ? "Image URL" : "Bild-URL"}
-                value={eventInput.thumbnailUrl}
-                onChange={(event) => setEventInput((current) => ({ ...current, thumbnailUrl: event.target.value }))}
-              />
+              <div className={styles.imageUploadBlock}>
+                <label className={styles.label}>{locale === "en" ? "Image Upload" : "Bild-Upload"}</label>
+                <input
+                  type="file"
+                  accept={ACCEPTED_IMAGE_EXTS}
+                  className={styles.fileInput}
+                  onChange={(event) => void handleEventImageUpload(event)}
+                />
+              </div>
+            </div>
+            <div className={styles.imageUploadMeta}>
+              <span>
+                {uploadingEventImage
+                  ? locale === "en" ? "Uploading image..." : "Bild wird hochgeladen..."
+                  : eventInput.thumbnailUrl
+                    ? locale === "en" ? "Image uploaded and ready." : "Bild hochgeladen und bereit."
+                    : locale === "en" ? "No image selected." : "Kein Bild ausgewählt."}
+              </span>
+              {eventInput.thumbnailUrl ? (
+                <button
+                  type="button"
+                  className={styles.clearImageButton}
+                  onClick={() => setEventInput((current) => ({ ...current, thumbnailUrl: "", thumbnailId: null }))}
+                >
+                  {locale === "en" ? "Remove" : "Entfernen"}
+                </button>
+              ) : null}
             </div>
             <div className={styles.grid2}>
               <input
@@ -600,14 +757,11 @@ export default function ManagePage() {
             <div className={styles.grid2}>
               <select
                 value={eventInput.category}
-                onChange={(event) => setEventInput((current) => ({ ...current, category: event.target.value }))}
+                onChange={(event) => setEventInput((current) => ({ ...current, category: event.target.value as CategoryOptionKey }))}
               >
-                <option value="">{locale === "en" ? "Category" : "Kategorie"}</option>
-                {categories.map((category) => (
-                  <option key={category.documentId ?? category.id} value={category.documentId ?? String(category.id ?? "")}>
-                    {category.name}
-                  </option>
-                ))}
+                <option value="none">No Category</option>
+                <option value="social">Social</option>
+                <option value="technology">Technology</option>
               </select>
               <span className={styles.helperText}>
                 {locale === "en" ? "Tags can be applied below." : "Tags können unten hinzugefügt werden."}
@@ -650,7 +804,7 @@ export default function ManagePage() {
             </div>
 
             <textarea
-              ref={eventEditorRef}
+              ref={setEventEditorRef}
               placeholder={locale === "en" ? "Long description / event details" : "Lange Beschreibung / Event-Details"}
               value={eventInput.description}
               onChange={(event) => setEventInput((current) => ({ ...current, description: event.target.value }))}

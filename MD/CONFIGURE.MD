@@ -11,6 +11,23 @@
 - Events: **Content Manager -> Event**
 - User profiles used by frontend roles: **Content Manager -> User**
 
+### Expected collection types in Strapi
+After cleanup, the active project collection types are:
+- **Campus User**
+- **Club**
+- **Event**
+- **News**
+- **News Category**
+- **News Tag**
+
+### Adding pictures
+- In the app's **Manage** page:
+  - **Create News** and **Create Event** now use **Image Upload** (file picker) instead of URL fields.
+  - **Create Club Request** uses **Cover Image Upload**.
+- In Strapi admin directly:
+  - Open an entry (News/Event/Club), click the media field, upload an image from your computer, then save/publish.
+  - Uploaded files are visible under **Media Library**.
+
 ## 3) News visibility control
 In each News entry, set **visibility** to:
 - `all` -> visible to all signed-in roles

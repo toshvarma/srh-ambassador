@@ -14,12 +14,6 @@
     "name": {
       "type": "string"
     },
-    "newsTag": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::news-article.news-article",
-      "mappedBy": "tags"
-    },
     "news": {
       "type": "relation",
       "relation": "manyToMany",
@@ -28,5 +22,4 @@
     }
   }
 }
-
 

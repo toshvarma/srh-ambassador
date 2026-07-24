@@ -52,7 +52,9 @@
     "featuredImage": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "featuredImageUrl": {
       "type": "string"
@@ -77,12 +79,20 @@
     },
     "status": {
       "type": "enumeration",
-      "enum": ["draft", "published", "archived"],
+      "enum": [
+        "draft",
+        "published",
+        "archived"
+      ],
       "default": "draft"
     },
     "visibility": {
       "type": "enumeration",
-      "enum": ["all", "student", "professor"],
+      "enum": [
+        "all",
+        "student",
+        "professor"
+      ],
       "default": "all"
     },
     "relatedClub": {

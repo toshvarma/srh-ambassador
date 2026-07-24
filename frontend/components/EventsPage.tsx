@@ -27,6 +27,7 @@ type Event = {
   start_datetime?: string;
   end_datetime?: string;
   location?: string;
+  thumbnail?: { url?: string } | null;
   thumbnailUrl?: string;
   club?: { documentId?: string; title?: string } | null;
   attendees?: EventAttendee[];
@@ -68,6 +69,7 @@ export default function EventsPage() {
           "sort[0]": "start_datetime:asc",
           "populate[0]": "club",
           "populate[1]": "attendees",
+          "populate[2]": "thumbnail",
         };
         if (clubFilter && myClubIds.length > 0) {
           myClubIds.forEach((id, index) => {
@@ -195,9 +197,9 @@ export default function EventsPage() {
                 const joined = auth?.profile?.documentId ? attendeeIds.includes(auth.profile.documentId) : false;
                 return (
                   <article key={event.documentId ?? event.id} className={styles.eventCard}>
-                    {event.thumbnailUrl ? (
+                    {event.thumbnail?.url || event.thumbnailUrl ? (
                       <img
-                        src={strapiMediaUrl(event.thumbnailUrl) ?? event.thumbnailUrl}
+                        src={strapiMediaUrl(event.thumbnail?.url) ?? strapiMediaUrl(event.thumbnailUrl) ?? event.thumbnailUrl}
                         alt={event.title ?? "Event"}
                         className={styles.eventImage}
                       />

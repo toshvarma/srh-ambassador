@@ -33,12 +33,6 @@
       },
       "required": true
     },
-    "news_articles": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::news-article.news-article",
-      "mappedBy": "news_category"
-    },
     "news": {
       "type": "relation",
       "relation": "oneToMany",
@@ -47,5 +41,4 @@
     }
   }
 }
-
 

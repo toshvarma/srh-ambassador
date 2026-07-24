@@ -28,6 +28,7 @@ type Club = {
   detailedDescription?: string;
   contact_email?: string;
   coverImageUrl?: string;
+  CoverImageMedia?: { url?: string } | null;
   ambassadorFeedback?: string;
   approvalStatus?: "pending" | "approved" | "rejected";
   submittedBy?: ClubMember | null;
@@ -58,6 +59,7 @@ export default function ClubsPage() {
         query: {
           "populate[0]": "submittedBy",
           "populate[1]": "members",
+          "populate[2]": "CoverImageMedia",
           "sort[0]": "title:asc",
         },
       });
@@ -105,9 +107,9 @@ export default function ClubsPage() {
           ) : (
             approvedClubs.map((club) => (
               <article key={club.documentId ?? club.id} className={styles.clubCard}>
-                {club.coverImageUrl ? (
+                {club.CoverImageMedia?.url || club.coverImageUrl ? (
                   <img
-                    src={strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl}
+                    src={strapiMediaUrl(club.CoverImageMedia?.url) ?? strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl}
                     alt={club.title ?? "Club"}
                     className={styles.clubImage}
                   />

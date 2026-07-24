@@ -28,6 +28,7 @@ type EventDetail = {
   start_datetime?: string;
   end_datetime?: string;
   location?: string;
+  thumbnail?: { url?: string } | null;
   thumbnailUrl?: string;
   club?: { documentId?: string; title?: string } | null;
   attendees?: EventAttendee[];
@@ -52,6 +53,7 @@ export default function EventDetailPage({ slug }: { slug: string }) {
           "filters[slug][$eq]": slug,
           "populate[0]": "club",
           "populate[1]": "attendees",
+          "populate[2]": "thumbnail",
         },
       });
       if (!data[0]) {
@@ -62,6 +64,7 @@ export default function EventDetailPage({ slug }: { slug: string }) {
             "filters[documentId][$eq]": slug,
             "populate[0]": "club",
             "populate[1]": "attendees",
+            "populate[2]": "thumbnail",
           },
         });
       }
@@ -135,9 +138,9 @@ export default function EventDetailPage({ slug }: { slug: string }) {
         {locale === "en" ? "← Back to Events" : "← Zurück zu Veranstaltungen"}
       </Link>
 
-      {eventItem.thumbnailUrl ? (
+      {eventItem.thumbnail?.url || eventItem.thumbnailUrl ? (
         <img
-          src={strapiMediaUrl(eventItem.thumbnailUrl) ?? eventItem.thumbnailUrl}
+          src={strapiMediaUrl(eventItem.thumbnail?.url) ?? strapiMediaUrl(eventItem.thumbnailUrl) ?? eventItem.thumbnailUrl}
           alt={eventItem.title ?? "Event"}
           className={styles.heroImage}
         />

@@ -83,6 +83,8 @@ export default function NewsPage() {
         "pagination[page]": nextPage,
         "pagination[pageSize]": pageSize,
         "sort[0]": "publishedAt:desc",
+        "filters[status][$eq]": "published",
+        "filters[publishedAt][$notNull]": "true",
       };
       if (currentFilter === "club" && myClubIds.length > 0) {
         myClubIds.forEach((id, index) => {
@@ -106,12 +108,10 @@ export default function NewsPage() {
       const filteredNews = visibleNews.filter((item) => {
         if (currentFilter === "all") return true;
         if (currentFilter === "club") return myClubIds.length > 0 && Boolean(item.relatedClub?.documentId);
-        if (role === "Student" || role === "ExchangeStudent") return item.visibility === "student" || item.courseLabel === "Student";
-        if (role === "Professor") return item.visibility === "professor" || item.courseLabel === "Professor";
-        if (role === "Teacher" || role === "Ambassador" || role === "Admin" || role === "SuperAdmin") {
-          return item.visibility === "student" || item.visibility === "professor" || Boolean(item.courseLabel);
-        }
-        return false;
+        if (item.courseLabel === "All Courses") return true;
+        if (!item.courseLabel) return false;
+        if (role === "Teacher" || role === "Ambassador" || role === "Admin" || role === "SuperAdmin") return true;
+        return canViewByRole(role, item.visibility);
       });
       setNews(filteredNews);
     } catch (err) {

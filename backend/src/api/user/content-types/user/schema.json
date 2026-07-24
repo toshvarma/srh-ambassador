@@ -4,16 +4,12 @@
   "info": {
     "singularName": "user",
     "pluralName": "users",
-    "displayName": "User"
+    "displayName": "Student"
   },
   "options": {
     "draftAndPublish": false
   },
-  "pluginOptions": {
-    "i18n": {
-      "localized": false
-    }
-  },
+  "pluginOptions": {},
   "attributes": {
     "firstName": {
       "type": "string",
@@ -30,6 +26,8 @@
     },
     "role": {
       "type": "enumeration",
+      "required": true,
+      "default": "Student",
       "enum": [
         "Student",
         "ExchangeStudent",
@@ -38,26 +36,19 @@
         "Ambassador",
         "Admin",
         "SuperAdmin"
-      ],
-      "required": true,
-      "default": "Student"
+      ]
     },
     "status": {
       "type": "enumeration",
+      "default": "pending",
       "enum": [
         "active",
         "inactive",
         "pending"
-      ],
-      "default": "pending"
+      ]
     },
     "universityAffiliation": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
+      "type": "string"
     },
     "enrollmentYear": {
       "type": "integer"
@@ -70,12 +61,7 @@
       ]
     },
     "bio": {
-      "type": "richtext",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
+      "type": "richtext"
     },
     "clubSubmissions": {
       "type": "relation",
@@ -106,12 +92,6 @@
       "relation": "manyToMany",
       "target": "api::club.club",
       "mappedBy": "ambassadors"
-    },
-    "articlesPublished": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::news-article.news-article",
-      "mappedBy": "author"
     },
     "newsPublished": {
       "type": "relation",

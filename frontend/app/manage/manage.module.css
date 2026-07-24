@@ -175,6 +175,36 @@
   color: var(--color-gray-600);
 }
 
+.imageUploadBlock {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.fileInput {
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-lg);
+  padding: 0.55rem 0.7rem;
+  background: var(--color-white);
+}
+
+.imageUploadMeta {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-600);
+}
+
+.clearImageButton {
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-gray-300);
+  background: var(--color-white);
+  color: var(--srh-primary);
+  padding: 0.25rem 0.7rem;
+  font-size: var(--font-size-sm);
+}
+
 .tagOptions {
   display: flex;
   flex-wrap: wrap;
@@ -232,6 +262,11 @@
 .preview :global(ul),
 .preview :global(ol) {
   margin: 0;
+}
+
+.previewText {
+  margin: 0;
+  white-space: pre-wrap;
 }
 
 .metaPanel {

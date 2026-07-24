@@ -69,6 +69,15 @@
   width: 100%;
 }
 
+.navLinkActive {
+  color: #ffe8d1;
+  opacity: 1;
+}
+
+.navLinkActive::after {
+  width: 100%;
+}
+
 .navLink:hover {
   color: #ffe8d1;
   opacity: 1;

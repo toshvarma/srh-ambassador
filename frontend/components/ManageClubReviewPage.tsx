@@ -34,6 +34,7 @@ type ClubReview = {
   ambassadorFeedback?: string;
   rejectionReason?: string;
   coverImageUrl?: string;
+  CoverImageMedia?: { url?: string } | null;
   submittedBy?: ClubMember | null;
   reviewedBy?: Reviewer | null;
   members?: ClubMember[];
@@ -71,6 +72,7 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
           "populate[0]": "submittedBy",
           "populate[1]": "members",
           "populate[2]": "reviewedBy",
+          "populate[3]": "CoverImageMedia",
         },
       });
       if (!data[0]) {
@@ -82,6 +84,7 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
             "populate[0]": "submittedBy",
             "populate[1]": "members",
             "populate[2]": "reviewedBy",
+            "populate[3]": "CoverImageMedia",
           },
         });
       }
@@ -242,8 +245,12 @@ export default function ManageClubReviewPage({ slug }: { slug: string }) {
         </span>
       </header>
 
-      {club.coverImageUrl ? (
-        <img src={strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl} alt={club.title ?? "Club"} className={styles.cover} />
+      {club.CoverImageMedia?.url || club.coverImageUrl ? (
+        <img
+          src={strapiMediaUrl(club.CoverImageMedia?.url) ?? strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl}
+          alt={club.title ?? "Club"}
+          className={styles.cover}
+        />
       ) : null}
 
       {/* ── Club details ── */}

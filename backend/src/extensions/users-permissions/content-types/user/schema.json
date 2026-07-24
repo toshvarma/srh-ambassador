@@ -65,14 +65,7 @@
       "target": "plugin::users-permissions.role",
       "inversedBy": "users",
       "configurable": false
-    },
-    "news_articles": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::news-article.news-article",
-      "mappedBy": "author"
     }
   }
 }
-
 

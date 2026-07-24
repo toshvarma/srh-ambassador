@@ -6,6 +6,11 @@
 'use strict';
 
 const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+const uploadPluginActions = [
+  'plugin::upload.content-api.find',
+  'plugin::upload.content-api.findOne',
+  'plugin::upload.content-api.upload',
+];
 
 const rolePermissionConfig = {
   Student: {
@@ -340,6 +345,16 @@ async function seedRoles() {
           },
         });
       }
+    }
+
+    for (const uploadAction of uploadPluginActions) {
+      await strapi.query('plugin::users-permissions.permission').create({
+        data: {
+          action: uploadAction,
+          role: role.id,
+          enabled: true,
+        },
+      });
     }
     console.log(`  ✓ Synced permissions for ${roleName}`);
   }

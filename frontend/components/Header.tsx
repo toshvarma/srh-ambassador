@@ -27,6 +27,8 @@ export default function Header() {
   const navLinks = auth ? authLinks : guestLinks;
   const canAccessManage =
     capabilities.canManageNews || capabilities.canManageEvents || capabilities.canApproveClubIdea;
+  const isCurrentPage = (href: string) =>
+    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <header className={styles.header}>
@@ -37,12 +39,21 @@ export default function Header() {
 
         <nav className={styles.nav}>
           {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} className={styles.navLink} aria-current={pathname === link.href ? "page" : undefined}>
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`${styles.navLink} ${isCurrentPage(link.href) ? styles.navLinkActive : ""}`}
+              aria-current={isCurrentPage(link.href) ? "page" : undefined}
+            >
               {link.label}
             </Link>
           ))}
           {canAccessManage ? (
-            <Link href="/manage" className={styles.navLink} aria-current={pathname === "/manage" ? "page" : undefined}>
+            <Link
+              href="/manage"
+              className={`${styles.navLink} ${isCurrentPage("/manage") ? styles.navLinkActive : ""}`}
+              aria-current={isCurrentPage("/manage") ? "page" : undefined}
+            >
               {t(locale, "navManage")}
             </Link>
           ) : null}
