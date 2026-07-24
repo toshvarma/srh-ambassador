@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,26 +8,25 @@ import { useLocale } from "@/context/LocaleContext";
 import { createStrapiEntry } from "@/lib/strapi";
 import styles from "./ClubNewPage.module.css";
 
-const JOOMLA_API_URL = process.env.NEXT_PUBLIC_JOOMLA_API_URL ?? process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://joomla.test";
-const ACCEPTED_IMAGE_TYPES = "image/png,image/jpeg,image/webp,image/gif";
-const ACCEPTED_IMAGE_EXTS = ".png,.jpg,.jpeg,.webp,.gif";
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://localhost:1337";
+const ACCEPTED_IMAGE_EXTS = ".png,.jpg,.jpeg,.webp";
 
-async function uploadImageFile(file: File, token: string): Promise<string> {
+async function uploadImageToStrapi(file: File, token: string): Promise<string> {
   const body = new FormData();
   body.append("files", file, file.name);
-  const res = await fetch(`${JOOMLA_API_URL}/srh-api/index.php/upload`, {
+  const res = await fetch(`${STRAPI_URL}/api/upload`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({})) as { error?: string };
-    throw new Error(err?.error ?? `Upload failed (${res.status})`);
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(err?.error?.message ?? `Upload failed (${res.status})`);
   }
-  const data = await res.json() as { data: Array<{ url?: string }> };
-  const url = data.data?.[0]?.url;
+  const data = await res.json() as Array<{ url?: string }>;
+  const url = data[0]?.url;
   if (!url) throw new Error("No URL returned from upload.");
-  return url.startsWith("http") ? url : `${JOOMLA_API_URL}${url}`;
+  return url.startsWith("http") ? url : `${STRAPI_URL}${url}`;
 }
 
 export default function ClubNewPage() {
@@ -35,7 +34,6 @@ export default function ClubNewPage() {
   const { auth } = useAuth();
   const capabilities = useCapabilities();
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -48,43 +46,15 @@ export default function ClubNewPage() {
     maximumMembers: "",
     specialEquipmentRequired: "",
     signupNotes: "",
+    coverImageUrl: "",
   });
-  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
-  const [coverImagePreview, setCoverImagePreview] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const en = locale === "en";
-
   function set(key: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
-  }
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError(en ? "Only image files are accepted (PNG, JPG, WEBP, GIF)." : "Nur Bilddateien sind erlaubt (PNG, JPG, WEBP, GIF).");
-      return;
-    }
-    setCoverImageFile(file);
-    setCoverImagePreview(URL.createObjectURL(file));
-    setError(null);
-  }
-
-  function resetForm() {
-    setForm({
-      title: "", shortDescription: "", detailedDescription: "",
-      contact_email: auth?.profile?.email ?? "",
-      meetingFrequency: "", recommendedFor: "",
-      minimumMembers: "", maximumMembers: "",
-      specialEquipmentRequired: "", signupNotes: "",
-    });
-    setCoverImageFile(null);
-    setCoverImagePreview("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -93,12 +63,6 @@ export default function ClubNewPage() {
     try {
       setSubmitting(true);
       setError(null);
-
-      let coverImageUrl: string | undefined;
-      if (coverImageFile) {
-        coverImageUrl = await uploadImageFile(coverImageFile, auth.token);
-      }
-
       await createStrapiEntry(
         "/clubs",
         {
@@ -113,7 +77,7 @@ export default function ClubNewPage() {
           maximumMembers: form.maximumMembers ? Number(form.maximumMembers) : undefined,
           specialEquipmentRequired: form.specialEquipmentRequired || undefined,
           signupNotes: form.signupNotes || undefined,
-          cover_image: coverImageUrl,
+          coverImageUrl: form.coverImageUrl || undefined,
           submittedBy: auth.profile.documentId,
           approvalStatus: "pending",
         },
@@ -121,11 +85,13 @@ export default function ClubNewPage() {
       );
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : en ? "Submission failed." : "Einreichung fehlgeschlagen.");
+      setError(err instanceof Error ? err.message : locale === "en" ? "Submission failed." : "Einreichung fehlgeschlagen.");
     } finally {
       setSubmitting(false);
     }
   }
+
+  const en = locale === "en";
 
   if (!capabilities.canSubmitClubIdea) {
     return (
@@ -134,7 +100,7 @@ export default function ClubNewPage() {
           <p className={styles.notice}>
             {en ? "You do not have permission to submit a club request." : "Sie haben keine Berechtigung, eine Club-Anfrage einzureichen."}
           </p>
-          <Link href="/clubs" className={styles.backLink}>← {en ? "Back to Clubs" : "Zurück zu Clubs"}</Link>
+          <Link href="/clubs" className={styles.backLink}>â† {en ? "Back to Clubs" : "ZurÃ¼ck zu Clubs"}</Link>
         </div>
       </div>
     );
@@ -144,19 +110,25 @@ export default function ClubNewPage() {
     return (
       <div className={styles.page}>
         <div className={styles.card}>
-          <div className={styles.successIcon}>✓</div>
+          <div className={styles.successIcon}>âœ“</div>
           <h1 className={styles.successTitle}>{en ? "Request Submitted!" : "Anfrage eingereicht!"}</h1>
           <p className={styles.notice}>
             {en
-              ? "Your club request has been submitted and is now under review by an ambassador. Once reviewed, you will see the decision — along with the ambassador's name and contact email — in your Profile under Club Submission Notifications."
-              : "Ihre Club-Anfrage wurde eingereicht und wird von einem Ambassador geprüft. Die Entscheidung — einschließlich Name und Kontakt des Ambassadors — erscheint in Ihrem Profil unter Club-Anfragen-Benachrichtigungen."}
+              ? "Your club request has been submitted and is now under review by an ambassador. Once reviewed, you will see the decision â€” along with the ambassador's name and contact email â€” in your Profile under Club Submission Notifications."
+              : "Ihre Club-Anfrage wurde eingereicht und wird von einem Ambassador geprÃ¼ft. Die Entscheidung â€” einschlieÃŸlich Name und Kontakt des Ambassadors â€” erscheint in Ihrem Profil unter Club-Anfragen-Benachrichtigungen."}
           </p>
           <div className={styles.successActions}>
-            <button className={styles.btnSecondary} onClick={() => { setSuccess(false); resetForm(); }}>
+            <button
+              className={styles.btnSecondary}
+              onClick={() => {
+                setSuccess(false);
+                setForm({ title: "", shortDescription: "", detailedDescription: "", contact_email: auth?.profile?.email ?? "", meetingFrequency: "", recommendedFor: "", minimumMembers: "", maximumMembers: "", specialEquipmentRequired: "", signupNotes: "", coverImageUrl: "" });
+              }}
+            >
               {en ? "Submit another" : "Weitere einreichen"}
             </button>
             <button className={styles.btnPrimary} onClick={() => router.push("/clubs")}>
-              {en ? "Back to Clubs" : "Zurück zu Clubs"}
+              {en ? "Back to Clubs" : "ZurÃ¼ck zu Clubs"}
             </button>
           </div>
         </div>
@@ -167,17 +139,17 @@ export default function ClubNewPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <Link href="/clubs" className={styles.backLink}>← {en ? "Back to Clubs" : "Zurück zu Clubs"}</Link>
+        <Link href="/clubs" className={styles.backLink}>â† {en ? "Back to Clubs" : "ZurÃ¼ck zu Clubs"}</Link>
         <h1 className={styles.pageTitle}>{en ? "Create Club Request" : "Club-Anfrage erstellen"}</h1>
         <p className={styles.pageSubtitle}>
           {en
             ? "Fill in the details below. Your request will be reviewed by an ambassador before being published."
-            : "Füllen Sie die Details unten aus. Ihre Anfrage wird von einem Ambassador geprüft, bevor sie veröffentlicht wird."}
+            : "FÃ¼llen Sie die Details unten aus. Ihre Anfrage wird von einem Ambassador geprÃ¼ft, bevor sie verÃ¶ffentlicht wird."}
         </p>
       </div>
 
       <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
-        {/* Basic Info */}
+        {/* â”€â”€ Basic Info â”€â”€ */}
         <fieldset className={styles.fieldset}>
           <legend className={styles.legend}>{en ? "Basic Information" : "Grundlegende Informationen"}</legend>
 
@@ -204,7 +176,7 @@ export default function ClubNewPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>{en ? "Detailed Description" : "Ausführliche Beschreibung"} *</label>
+            <label className={styles.label}>{en ? "Detailed Description" : "AusfÃ¼hrliche Beschreibung"} *</label>
             <textarea
               className={styles.textarea}
               rows={5}
@@ -218,22 +190,22 @@ export default function ClubNewPage() {
           </div>
         </fieldset>
 
-        {/* Logistics */}
+        {/* â”€â”€ Logistics â”€â”€ */}
         <fieldset className={styles.fieldset}>
           <legend className={styles.legend}>{en ? "Logistics" : "Logistik"}</legend>
 
           <div className={styles.row2}>
             <div className={styles.field}>
-              <label className={styles.label}>{en ? "Meeting Frequency" : "Treffenhäufigkeit"}</label>
+              <label className={styles.label}>{en ? "Meeting Frequency" : "TreffenhÃ¤ufigkeit"}</label>
               <input
                 className={styles.input}
                 value={form.meetingFrequency}
                 onChange={set("meetingFrequency")}
-                placeholder={en ? "e.g. Weekly (Thursday 18:00)" : "z.B. Wöchentlich (Donnerstag 18:00)"}
+                placeholder={en ? "e.g. Weekly (Thursday 18:00)" : "z.B. WÃ¶chentlich (Donnerstag 18:00)"}
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>{en ? "Recommended For" : "Empfohlen für"}</label>
+              <label className={styles.label}>{en ? "Recommended For" : "Empfohlen fÃ¼r"}</label>
               <input
                 className={styles.input}
                 value={form.recommendedFor}
@@ -269,17 +241,17 @@ export default function ClubNewPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>{en ? "Special Equipment Required" : "Benötigte Ausrüstung"}</label>
+            <label className={styles.label}>{en ? "Special Equipment Required" : "BenÃ¶tigte AusrÃ¼stung"}</label>
             <input
               className={styles.input}
               value={form.specialEquipmentRequired}
               onChange={set("specialEquipmentRequired")}
-              placeholder={en ? "e.g. Laptop, camera — or leave blank if none" : "z.B. Laptop, Kamera — oder leer lassen"}
+              placeholder={en ? "e.g. Laptop, camera â€” or leave blank if none" : "z.B. Laptop, Kamera â€“ oder leer lassen"}
             />
           </div>
         </fieldset>
 
-        {/* Contact & Media */}
+        {/* â”€â”€ Contact & Media â”€â”€ */}
         <fieldset className={styles.fieldset}>
           <legend className={styles.legend}>{en ? "Contact & Media" : "Kontakt & Medien"}</legend>
 
@@ -295,35 +267,14 @@ export default function ClubNewPage() {
               />
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>{en ? "Cover Image" : "Titelbild"}</label>
-              {coverImagePreview ? (
-                <div className={styles.imagePreviewWrap}>
-                  <img src={coverImagePreview} alt="Preview" className={styles.imagePreview} />
-                  <button
-                    type="button"
-                    className={styles.imageRemove}
-                    onClick={() => {
-                      setCoverImageFile(null);
-                      setCoverImagePreview("");
-                      if (fileInputRef.current) fileInputRef.current.value = "";
-                    }}
-                    aria-label="Remove image"
-                  >✕</button>
-                </div>
-              ) : (
-                <label className={styles.imageDropzone}>
-                  <span className={styles.imageDropzoneIcon}>🖼</span>
-                  <span>{en ? "Click to upload" : "Klicken zum Hochladen"}</span>
-                  <span className={styles.imageDropzoneHint}>PNG, JPG, WEBP, GIF</span>
-                  <input
-                    ref={fileInputRef}
-                    className={styles.fileInputHidden}
-                    type="file"
-                    accept={ACCEPTED_IMAGE_EXTS}
-                    onChange={handleFileChange}
-                  />
-                </label>
-              )}
+              <label className={styles.label}>{en ? "Cover Image URL" : "Titelbild-URL"}</label>
+              <input
+                className={styles.input}
+                type="url"
+                value={form.coverImageUrl}
+                onChange={set("coverImageUrl")}
+                placeholder="https://..."
+              />
             </div>
           </div>
 
@@ -334,7 +285,7 @@ export default function ClubNewPage() {
               rows={2}
               value={form.signupNotes}
               onChange={set("signupNotes")}
-              placeholder={en ? "Any requirements or notes for people who want to join?" : "Anforderungen oder Hinweise für Beitrittswillige?"}
+              placeholder={en ? "Any requirements or notes for people who want to join?" : "Anforderungen oder Hinweise fÃ¼r Beitrittswillige?"}
             />
           </div>
         </fieldset>
@@ -351,8 +302,8 @@ export default function ClubNewPage() {
             disabled={submitting || !form.title || !form.shortDescription || !form.detailedDescription || !form.contact_email}
           >
             {submitting
-              ? (en ? "Submitting…" : "Wird eingereicht…")
-              : (en ? "Submit for Review" : "Zur Prüfung einreichen")}
+              ? en ? "Submittingâ€¦" : "Wird eingereichtâ€¦"
+              : en ? "Submit for Review" : "Zur PrÃ¼fung einreichen"}
           </button>
         </div>
       </form>

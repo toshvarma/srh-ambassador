@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { guestPublicEvents } from "@/lib/guestEvents";
 import { t } from "@/lib/i18n";
-import { fetchStrapiCollection, strapiMediaUrl, type StrapiEntry } from "@/lib/strapi";
+import { fetchStrapiCollection, strapiMediaUrl, updateStrapiEntry, type StrapiEntry } from "@/lib/strapi";
 import styles from "./EventsPage.module.css";
 
 type EventAttendee = {
@@ -28,11 +28,8 @@ type Event = {
   end_datetime?: string;
   location?: string;
   thumbnailUrl?: string;
-  tags?: Array<{ documentId?: string; id?: number; name?: string; title?: string }>;
   club?: { documentId?: string; title?: string } | null;
   attendees?: EventAttendee[];
-  startDate?: string;
-  endDate?: string;
 };
 
 export default function EventsPage() {
@@ -43,6 +40,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [signingUp, setSigningUp] = useState<string | null>(null);
   const [myClubFilter, setMyClubFilter] = useState(false);
   const [myClubIds, setMyClubIds] = useState<string[]>([]);
   const pageSize = 6;
@@ -99,6 +97,28 @@ export default function EventsPage() {
   useEffect(() => {
     void fetchEvents(page, myClubFilter);
   }, [fetchEvents, page, myClubFilter]);
+
+  async function signupForEvent(eventItem: StrapiEntry<Event>) {
+    if (!auth?.token || !auth.profile?.documentId || !eventItem.documentId) return;
+    const existingAttendeeIds = (eventItem.attendees ?? [])
+      .map((attendee) => attendee.documentId)
+      .filter((id): id is string => typeof id === "string");
+    if (existingAttendeeIds.includes(auth.profile.documentId)) return;
+
+    try {
+      setSigningUp(eventItem.documentId);
+      await updateStrapiEntry(
+        `/events/${eventItem.documentId}`,
+        { attendees: [...existingAttendeeIds, auth.profile.documentId] },
+        { token: auth.token, locale }
+      );
+      await fetchEvents(page, myClubFilter);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t(locale, "unknownError"));
+    } finally {
+      setSigningUp(null);
+    }
+  }
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => {
@@ -169,14 +189,10 @@ export default function EventsPage() {
               {sortedEvents.map((event) => {
                 const start = event.start_datetime ? new Date(event.start_datetime) : null;
                 const end = event.end_datetime ? new Date(event.end_datetime) : null;
-                const normalizedStart = start ?? (event.startDate ? new Date(event.startDate) : null);
-                const normalizedEnd = end ?? (event.endDate ? new Date(event.endDate) : null);
                 const attendeeIds = (event.attendees ?? [])
                   .map((attendee) => attendee.documentId)
                   .filter((id): id is string => typeof id === "string");
-                const eventTags = (event.tags ?? [])
-                  .map((tag) => (tag.name ?? tag.title ?? "").trim())
-                  .filter((tag) => tag && tag.toLowerCase() !== "root");
+                const joined = auth?.profile?.documentId ? attendeeIds.includes(auth.profile.documentId) : false;
                 return (
                   <article key={event.documentId ?? event.id} className={styles.eventCard}>
                     {event.thumbnailUrl ? (
@@ -191,36 +207,22 @@ export default function EventsPage() {
                     <div className={styles.eventBody}>
                       {event.club?.title ? <span className={styles.clubBadge}>{event.club.title}</span> : null}
                       <h3 className={styles.eventTitle}>{event.title}</h3>
-                      <p className={styles.eventDescription}>
-                        {event.shortDescription
-                          ?? (event.description
-                            ? `${event.description.slice(0, 140)}…`
-                            : (event.title ?? ""))}
-                      </p>
-                      {eventTags.length > 0 ? (
-                        <div className={styles.tagList}>
-                          {eventTags.map((tag) => (
-                            <span key={`${event.documentId ?? event.id}-${tag}`} className={styles.tagChip}>
-                             {tag}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
+                      <p className={styles.eventDescription}>{event.shortDescription ?? event.description}</p>
                       <p className={styles.eventAuthor}>
                         {locale === "en" ? "Author" : "Autor"}: {event.authorName || "SRH Team"}
                       </p>
                       <p className={styles.eventMeta}>
                         {event.location ? `📍 ${event.location}` : ""}
-                        {normalizedStart
-                          ? ` · ${normalizedStart.toLocaleString(locale === "en" ? "en-US" : "de-DE", {
+                        {start
+                          ? ` · ${start.toLocaleString(locale === "en" ? "en-US" : "de-DE", {
                               day: "2-digit",
                               month: "short",
                               hour: "2-digit",
                               minute: "2-digit",
                             })}`
                           : ""}
-                        {normalizedEnd
-                          ? ` - ${normalizedEnd.toLocaleTimeString(locale === "en" ? "en-US" : "de-DE", {
+                        {end
+                          ? ` - ${end.toLocaleTimeString(locale === "en" ? "en-US" : "de-DE", {
                               hour: "2-digit",
                               minute: "2-digit",
                             })}`
@@ -236,6 +238,22 @@ export default function EventsPage() {
                         >
                           {locale === "en" ? "Read more" : "Mehr lesen"}
                         </Link>
+                        {!isGuestViewer ? (
+                          <button
+                            type="button"
+                            className={styles.signupButton}
+                            disabled={joined || signingUp === event.documentId || !auth?.profile?.documentId}
+                            onClick={() => void signupForEvent(event)}
+                          >
+                            {joined
+                              ? locale === "en" ? "✓ Signed up" : "✓ Angemeldet"
+                              : signingUp === event.documentId
+                                ? t(locale, "loading")
+                                : locale === "en"
+                                  ? "Sign up"
+                                  : "Anmelden"}
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </article>

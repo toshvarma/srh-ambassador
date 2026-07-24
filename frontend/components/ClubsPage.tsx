@@ -6,8 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth, useCapabilities } from "@/context/AuthContext";
 import { useLocale } from "@/context/LocaleContext";
 import { t } from "@/lib/i18n";
-import { resolveFirstMediaUrl } from "@/lib/media";
-import { fetchStrapiCollection, type StrapiEntry } from "@/lib/strapi";
+import { fetchStrapiCollection, strapiMediaUrl, type StrapiEntry } from "@/lib/strapi";
 import styles from "./ClubsPage.module.css";
 
 type ClubMember = {
@@ -28,10 +27,7 @@ type Club = {
   description?: string;
   detailedDescription?: string;
   contact_email?: string;
-  contactEmail?: string;
   coverImageUrl?: string;
-  coverImage?: { url?: string } | null;
-  cover_image?: unknown;
   ambassadorFeedback?: string;
   approvalStatus?: "pending" | "approved" | "rejected";
   submittedBy?: ClubMember | null;
@@ -107,14 +103,11 @@ export default function ClubsPage() {
           {approvedClubs.length === 0 ? (
             <div className={styles.noClubs}>{t(locale, "noData")}</div>
           ) : (
-            approvedClubs.map((club) => {
-              const coverImageSrc = resolveFirstMediaUrl(club.coverImageUrl, club.coverImage, club.cover_image);
-              const contactEmail = club.contact_email ?? club.contactEmail ?? club.submittedBy?.email ?? "-";
-              return (
+            approvedClubs.map((club) => (
               <article key={club.documentId ?? club.id} className={styles.clubCard}>
-                {coverImageSrc ? (
+                {club.coverImageUrl ? (
                   <img
-                    src={coverImageSrc}
+                    src={strapiMediaUrl(club.coverImageUrl) ?? club.coverImageUrl}
                     alt={club.title ?? "Club"}
                     className={styles.clubImage}
                   />
@@ -126,7 +119,7 @@ export default function ClubsPage() {
                   <p className={styles.clubShortDesc}>{club.shortDescription}</p>
                   <p className={styles.clubMeta}>
                     {locale === "en" ? "Members" : "Mitglieder"}: {(club.members ?? []).length} ·{" "}
-                    {locale === "en" ? "Contact" : "Kontakt"}: {contactEmail}
+                    {locale === "en" ? "Contact" : "Kontakt"}: {club.contact_email ?? "-"}
                   </p>
                   <Link
                     href={`/clubs/${club.slug ?? club.documentId ?? club.id ?? ""}`}
@@ -137,8 +130,7 @@ export default function ClubsPage() {
                   {club.ambassadorFeedback ? <p className={styles.feedback}>{club.ambassadorFeedback}</p> : null}
                 </div>
               </article>
-              );
-            })
+            ))
           )}
         </section>
       </section>

@@ -29,11 +29,8 @@ type EventDetail = {
   end_datetime?: string;
   location?: string;
   thumbnailUrl?: string;
-  tags?: Array<{ documentId?: string; id?: number; name?: string; title?: string }>;
   club?: { documentId?: string; title?: string } | null;
   attendees?: EventAttendee[];
-  startDate?: string;
-  endDate?: string;
 };
 
 export default function EventDetailPage({ slug }: { slug: string }) {
@@ -125,11 +122,8 @@ export default function EventDetailPage({ slug }: { slug: string }) {
   if (error) return <div className={styles.error}>{error}</div>;
   if (!eventItem) return <div className={styles.error}>{locale === "en" ? "Event not found." : "Veranstaltung nicht gefunden."}</div>;
 
-  const start = eventItem.start_datetime ? new Date(eventItem.start_datetime) : (eventItem.startDate ? new Date(eventItem.startDate) : null);
-  const end = eventItem.end_datetime ? new Date(eventItem.end_datetime) : (eventItem.endDate ? new Date(eventItem.endDate) : null);
-  const eventTags = (eventItem.tags ?? [])
-    .map((tag) => (tag.name ?? tag.title ?? "").trim())
-    .filter((tag) => tag && tag.toLowerCase() !== "root");
+  const start = eventItem.start_datetime ? new Date(eventItem.start_datetime) : null;
+  const end = eventItem.end_datetime ? new Date(eventItem.end_datetime) : null;
   const attendeeIds = (eventItem.attendees ?? [])
     .map((attendee) => attendee.documentId)
     .filter((id): id is string => Boolean(id));
@@ -155,24 +149,15 @@ export default function EventDetailPage({ slug }: { slug: string }) {
         {eventItem.authorName || "SRH Team"}
       </p>
       <p className={styles.meta}>
-        {start ? `${locale === "en" ? "Start time" : "Startzeit"}: ${start.toLocaleString(locale === "en" ? "en-US" : "de-DE")}` : ""}
-        {end ? ` · ${locale === "en" ? "End time" : "Endzeit"}: ${end.toLocaleString(locale === "en" ? "en-US" : "de-DE")}` : ""}
+        {start ? start.toLocaleString(locale === "en" ? "en-US" : "de-DE") : ""}
+        {end ? ` - ${end.toLocaleString(locale === "en" ? "en-US" : "de-DE")}` : ""}
       </p>
       <p className={styles.meta}>{eventItem.location ? `📍 ${eventItem.location}` : ""}</p>
-      {eventTags.length > 0 ? (
-        <div className={styles.tagList}>
-          {eventTags.map((tag) => (
-            <span key={`${eventItem.documentId ?? eventItem.id}-${tag}`} className={styles.tagChip}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      ) : null}
 
       <section className={styles.body}>
         <h2>{locale === "en" ? "Details" : "Details"}</h2>
         {eventItem.shortDescription ? <p>{eventItem.shortDescription}</p> : null}
-        <ReactMarkdown>{eventItem.description ?? eventItem.shortDescription ?? eventItem.title ?? ""}</ReactMarkdown>
+        <ReactMarkdown>{eventItem.description ?? ""}</ReactMarkdown>
       </section>
 
       <section className={styles.body}>

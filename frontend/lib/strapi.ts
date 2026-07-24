@@ -1,20 +1,4 @@
-// Joomla backend base URL (replaces Strapi).
-// Set NEXT_PUBLIC_JOOMLA_API_URL in frontend/.env.local
-// e.g. NEXT_PUBLIC_JOOMLA_API_URL=http://joomla.test
-const STRAPI_URL = process.env.NEXT_PUBLIC_JOOMLA_API_URL ?? process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://joomla.test";
-
-// Maps the Strapi-style resource paths used throughout the app to the
-// com_ambassador standalone API using PATH_INFO — works without any .htaccess rewrite.
-// Access pattern: http://joomla-cms.test/srh-api/index.php/clubs
-const PATH_MAP: Record<string, string> = {
-  "/clubs":            "/srh-api/index.php/clubs",
-  "/events":           "/srh-api/index.php/events",
-  "/news-items":       "/srh-api/index.php/news-items",
-  "/news-categories":  "/srh-api/index.php/news-categories",
-  "/news-tags":        "/srh-api/index.php/news-tags",
-  "/users":            "/srh-api/index.php/users",
-  "/upload":           "/srh-api/index.php/upload",
-};
+const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? "http://localhost:1337";
 
 type StrapiResponse<T> = {
   data: T;
@@ -42,23 +26,15 @@ function toApiPath(path: string, skipApiPrefix = false): string {
     return path;
   }
 
-  // Check the exact path or a path with a suffix (e.g. /clubs/some-slug)
-  for (const [prefix, mapped] of Object.entries(PATH_MAP)) {
-    if (path === prefix) {
-      return mapped;
-    }
-    if (path.startsWith(prefix + "/")) {
-      return mapped + path.slice(prefix.length);
-    }
-  }
-
-  // Already an absolute API path — pass through
   if (path.startsWith("/api/")) {
     return path;
   }
 
-  // Fallback: prepend Joomla ambassador base (shouldn't normally be reached)
-  return "/api/index.php/v1/ambassador" + (path.startsWith("/") ? path : "/" + path);
+  if (path.startsWith("/")) {
+    return `/api${path}`;
+  }
+
+  return `/api/${path}`;
 }
 
 function normalizeEntry<T extends Record<string, unknown>>(entry: Record<string, unknown>): StrapiEntry<T> {
@@ -118,7 +94,7 @@ export async function fetchStrapi(path: string, options: FetchStrapiOptions = {}
 
   const payload = await response.json();
   if (!response.ok) {
-    const message = payload?.error?.message || payload?.message || `Request failed: ${response.statusText}`;
+    const message = payload?.error?.message || payload?.message || `Strapi request failed: ${response.statusText}`;
     throw new Error(message);
   }
 
@@ -176,23 +152,7 @@ export function strapiMediaUrl(url?: string | null): string | undefined {
     return undefined;
   }
 
-  if (
-    url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("blob:") ||
-    url.startsWith("data:")
-  ) {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      try {
-        const remote = new URL(url);
-        const localBase = new URL(STRAPI_URL);
-        if (remote.host !== localBase.host && remote.pathname.startsWith("/images/")) {
-          return `${localBase.origin}${remote.pathname}${remote.search}`;
-        }
-      } catch {
-        return url;
-      }
-    }
+  if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
 
